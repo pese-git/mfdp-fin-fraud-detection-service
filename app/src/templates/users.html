@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Список пользователей{% endblock %}
+{% block content %}
+<h2>Список пользователей</h2>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>EMail</th>
+            <th>Balance</th>
+            <th>Created</th>
+            <th>Last Updated</th>
+            <th>Is Active</th>
+            <th>Controls</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.wallet.balance }}</td>
+            <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td>{{ user.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td>{{ user.is_active }}</td>
+            <td>
+                <a href="/balance/{{ user.id }}">Up Balance</a>
+                <a href="/user/{{ user.id }}">Edit</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

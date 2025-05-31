@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Баланс{% endblock %}
+{% block content %}
+<h2>Ваш баланс</h2>
+<p>Текущий баланс: {{ user.wallet.balance }} кредитов</p>
+<button onclick="location.href='/balance/recharge/{{ user.id }}'">Пополнить баланс</button>
+
+<h3>История транзакций</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Тип</th>
+            <th>Сумма</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for transaction in transactions %}
+        <tr>
+            <td>{{ transaction.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td>{{ transaction.transaction_type }}</td>
+            <td>{{ transaction.amount }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,46 @@
+<!-- base.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}My App{% endblock %}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <header>
+        <h1>ML Service</h1>
+        <nav>
+            <ul>
+                <li><a href="/">Главная</a></li>
+                {% if user %}
+                <li><a href="/dashboard">Личный Кабинет</a></li>
+                <li><a href="/balance">Баланс</a></li>
+                <li><a href="/predictions">История Предсказаний</a></li>
+                <li><a href="/predict_iris">Предсказание</a></li>
+                {% if user.roles.name == "admin" %}
+                <li><a href="/users">Пользователи</a></li>
+                {% endif %}
+                <li><a href="/logout">Выйти</a></li>
+                {% else %}
+                <li><a href="/login">Войти</a></li>
+                <li><a href="/register">Регистрация</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% if user %}
+        <p>Добро пожаловать, {{ user.name }}</p>
+        {% endif %}
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>© 2025 ML Service</p>
+    </footer>
+</body>
+
+</html>

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+
+{% block title %}Редактирование пользователя{% endblock %}
+{% block header %}Редактирование пользователя{% endblock %}
+{% block content %}
+<h2>Редактирование пользователя</h2>
+<form action="/user/{{ edit_user.id }}" method="post">
+
+    <label for="name">Имя:</label>
+    <input type="text" id="name" name="name" value="{{ edit_user.name }}" required><br>
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" value="{{ edit_user.email }}" required><br>
+
+    <label for="is_active">Активен:</label>
+    <input type="checkbox" id="is_active" name="is_active" {% if edit_user.is_active %} checked {% endif %}><br>
+
+    <input type="submit" value="Сохранить изменения">
+</form>
+
+{% if errors %}
+<div class="errors">
+    {% for error in errors %}
+    <p style="color: red;">{{ error }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

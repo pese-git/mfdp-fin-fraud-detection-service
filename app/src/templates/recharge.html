@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Пополнение баланса{% endblock %}
+{% block content %}
+<h2>Пополнение баланса для {{user.name}}</h2>
+<form action="/balance/recharge/{{user.id}}" method="post">
+    <label for="amount">Введите сумму пополнения:</label>
+    <input type="number" id="amount" name="amount" min="1" required><br>
+    <input type="submit" value="Пополнить">
+</form>
+{% if errors %}
+<div class="errors">
+    {% for error in errors %}
+    <p style="color: red;">{{ error }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+{% if message %}
+<p style="color: green;">{{ message }}</p>
+{% endif %}
+{% endblock %}
