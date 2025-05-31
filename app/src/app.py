@@ -15,28 +15,21 @@ from src.permission.access_control_middelware import AccessControlMiddleware
 from src.routes.home import home_route
 from src.routes.api.oauth import oauth_route
 from src.routes.api.user import user_router
-from src.routes.api.wallet import wallet_router
-from src.routes.api.transaction import transaction_router
 from src.routes.api.prediction import prediction_router
 from src.routes.api.task import task_router
 from src.routes.api.model import model_router
-from src.routes.api.balance import balance_router
 from src.routes.api.predict import predict_router
 from src.routes.login import login_route
 from src.routes.dashboard import dashboard_route
 from src.routes.register import register_route
-from src.routes.balance import balance_route
 from src.routes.predictions import predictions_route
 from src.routes.predict_iris import predict_iris_route
 from src.routes.users import users_route
 from src.database.database import get_session, init_db, engine
 from src.models.user import User
 from src.models.model import Model
-from src.models.wallet import Wallet
 from src.services.crud.user import create_user
 from src.services.crud.model import create_model
-from src.services.crud.wallet import create_wallet
-from src.services.crud.balance import update_balance_by_user_id
 from src.services.crud.predict import predict_processing
 from src.auth.hash_password import HashPassword
 
@@ -70,18 +63,18 @@ app.include_router(home_route)
 app.include_router(login_route)
 app.include_router(dashboard_route)
 app.include_router(register_route)
-app.include_router(balance_route)
+#app.include_router(balance_route)
 app.include_router(predictions_route)
 app.include_router(predict_iris_route)
 app.include_router(users_route)
 app.include_router(oauth_route, prefix="/api/oauth")
 app.include_router(user_router, prefix="/api/user")
-app.include_router(wallet_router, prefix="/api/wallet")
-app.include_router(transaction_router, prefix="/api/transaction")
+#app.include_router(wallet_router, prefix="/api/wallet")
+#app.include_router(transaction_router, prefix="/api/transaction")
 app.include_router(prediction_router, prefix="/api/prediction")
 app.include_router(model_router, prefix="/api/model")
 app.include_router(task_router, prefix="/api/tasks")
-app.include_router(balance_router, prefix="/api/balance")
+#app.include_router(balance_router, prefix="/api/balance")
 app.include_router(predict_router, prefix="/api/predict")
 
 
@@ -128,18 +121,6 @@ def init_data() -> None:
             user_access_dashboard_get = AccessPolicy(
                 role=user_role, resource="/dashboard", action="GET"
             )
-            user_access_balance_get = AccessPolicy(
-                role=user_role, resource="/balance", action="GET"
-            )
-            user_access_balance_get2 = AccessPolicy(
-                role=user_role, resource="/balance/", action="GET"
-            )
-            user_access_balance_recharge_get = AccessPolicy(
-                role=user_role, resource="/balance/recharge/", action="GET"
-            )
-            user_access_balance_recharge_post = AccessPolicy(
-                role=user_role, resource="/balance/recharge/", action="POST"
-            )
             user_access_predictions_get = AccessPolicy(
                 role=user_role, resource="/predictions", action="GET"
             )
@@ -178,13 +159,9 @@ def init_data() -> None:
                     admin_access_put,
                     admin_access_delete,
                     user_access_dashboard_get,
-                    user_access_balance_get,
-                    user_access_balance_get2,
                     user_access_predictions_get,
                     user_access_predict_iris_get,
                     user_access_predict_iris_post,
-                    user_access_balance_recharge_get,
-                    user_access_balance_recharge_post,
                     user_access_profile_get,
                     user_access_predict_post,
                     user_access_predict_task_create_post,
@@ -210,18 +187,9 @@ def init_data() -> None:
             )
             create_user(admin, session=session)
             create_user(demo, session=session)
-            admin_wallet = Wallet(balance=0, user=admin)
-
-            demo_wallet = Wallet(balance=0, user=demo)
-            create_wallet(admin_wallet, session=session)
-            create_wallet(demo_wallet, session=session)
 
             model = Model(name="chatgpt-o4", path="model from")
             create_model(model, session=session)
-
-        with Session(engine) as session:
-            update_balance_by_user_id(user_id=1, amount=1500, session=session)
-            update_balance_by_user_id(user_id=2, amount=100, session=session)
 
         with Session(engine) as session:
             predict_processing(

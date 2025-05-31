@@ -8,12 +8,9 @@ from src.auth.jwt_handler import create_access_token
 from src.auth.hash_password import HashPassword
 from src.database.database import get_session
 from src.models.prediction import Prediction
-from src.models.transaction import Transaction
 from src.models.user import User
 from src.models.role import Role
-from src.models.wallet import Wallet
 from src.services.crud import user as UserService
-from src.services.crud import wallet as WalletService
 
 from src.database.config import get_settings
 
@@ -38,9 +35,9 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: str | None = None
-    transactions: Optional[List[Transaction]]
+    #transactions: Optional[List[Transaction]]
     predictions: Optional[List[Prediction]]
-    wallet: Optional[Wallet]
+    #wallet: Optional[Wallet]
     created_at: datetime
 
     updated_at: datetime
@@ -74,15 +71,13 @@ async def signup(
             detail="User with supplied email already exists",
         )
 
-    new_wallet: Wallet = Wallet(balance=0)
-    WalletService.create_wallet(new_wallet, session=session)
+
 
     user_role: Role = session.query(Role).filter_by(name="user").first()
     new_user: User = User(
         name=data.name,
         email=data.email,
         hashed_password=hash_password.create_hash(data.password),
-        wallet=new_wallet,
         roles=user_role,
     )
 

@@ -11,8 +11,6 @@ from src.services.rpc.rpc_client import RpcClient
 from src.auth.authenticate import authenticate
 from src.database.database import get_session
 from src.models.task import Task
-from src.models.wallet import Wallet
-from src.models.transaction import Transaction, TransactionType
 
 
 def get_rpc() -> RpcClient:
@@ -208,24 +206,11 @@ async def create_task(
         model = session.query(Model).filter(Model.name == data.model).first()
         if not model:
             raise HTTPException(status_code=400, detail="Model not found")
-        # Получаем кошелек пользователя
-        wallet = session.query(Wallet).filter(Wallet.user_id == user["id"]).first()
-        if not wallet:
-            raise HTTPException(status_code=400, detail="Wallet not found")
-        if wallet.balance < 10:  # Стоимость предсказания
-            raise HTTPException(status_code=400, detail="Insufficient funds")
-        # Списываем средства
-        wallet.balance -= 10
-        # Создаем запись о транзакции
-        new_transaction = Transaction(
-            user_id=user["id"], amount=-10, transaction_type=TransactionType.EXPENSE
-        )
-        session.add(new_transaction)
-        session.flush()
+        
         # Генерация task_id и постановка задачи в очередь
         task_id = rpc.call(data.input_data)
         task = Task(
-            task_id=task_id, status="init", model=model, transaction=new_transaction
+            task_id=task_id, status="init", model=model
         )
         session.add(task)
         session.commit()

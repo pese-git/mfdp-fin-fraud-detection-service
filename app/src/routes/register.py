@@ -6,10 +6,8 @@ from sqlmodel import Session
 
 from src.database.database import get_session
 from src.services.crud.user import get_user_by_email, get_user_by_name, create_user
-from src.services.crud.wallet import create_wallet
 from src.auth.hash_password import HashPassword
 from src.models.user import User
-from src.models.wallet import Wallet
 from src.models.role import Role
 
 
@@ -56,8 +54,6 @@ async def register_post(request: Request, db: Session = Depends(get_session)):
                 role_id=user_role.id,
             )
             create_user(new_user=user_create, session=db)
-            wallet_create = Wallet(balance=0, user=user_create)
-            create_wallet(wallet_create, session=db)
             msg = "Register Successful!"
             print("[green]Register successful!!!!")
             return response

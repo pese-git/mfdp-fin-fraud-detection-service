@@ -41,7 +41,7 @@ class Task(SQLModel, table=True):
     model: Optional["Model"] = Relationship(back_populates="tasks")  # type: ignore
 
     prediction: Optional["Prediction"] = Relationship(back_populates="task")  # type: ignore
-    transaction: Optional["Transaction"] = Relationship(back_populates="task")  # type: ignore
+    #transaction: Optional["Transaction"] = Relationship(back_populates="task")  # type: ignore
 
     created_at: datetime = Field(
         default=None,

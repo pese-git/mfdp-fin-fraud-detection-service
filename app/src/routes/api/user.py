@@ -3,15 +3,12 @@ from fastapi import APIRouter, Body, HTTPException, status, Depends
 from pydantic import BaseModel
 from sqlmodel import Session
 from src.models.prediction import Prediction
-from src.models.transaction import Transaction
 from src.auth.hash_password import HashPassword
 from src.auth.authenticate import authenticate
 from src.database.database import get_session
 from src.models.user import User
-from src.models.wallet import Wallet
 from src.models.role import Role
 import src.services.crud.user as UserService
-import src.services.crud.wallet as WalletService
 from typing import List, Optional
 
 user_router = APIRouter(tags=["User"])
@@ -22,9 +19,7 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: str | None = None
-    transactions: Optional[List[Transaction]]
     predictions: Optional[List[Prediction]]
-    wallet: Optional[Wallet]
     created_at: datetime
 
     updated_at: datetime
@@ -100,8 +95,8 @@ async def create_user(
     body.role_id = user_role.id
 
     new_user = UserService.create_user(body, session=session)
-    new_wallet = Wallet(user_id=body.id, balance=0)
-    WalletService.create_wallet(new_wallet=new_wallet, session=session)
+    #new_wallet = Wallet(user_id=body.id, balance=0)
+    #WalletService.create_wallet(new_wallet=new_wallet, session=session)
     return new_user
 
 

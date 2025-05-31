@@ -5,8 +5,8 @@ from sqlmodel import Session, select
 from src.models.model import Model
 from src.models.prediction import Prediction
 from src.models.task import Task
-from src.models.transaction import Transaction, TransactionType
-from src.models.wallet import Wallet
+#from src.models.transaction import Transaction, TransactionType
+#from src.models.wallet import Wallet
 
 
 def predict_processing(
@@ -55,25 +55,25 @@ def predict_processing(
         if not model:
             raise RuntimeError("Model not found")
         # Получаем кошелек пользователя
-        wallet: Optional[Wallet] = (
-            session.query(Wallet).filter(Wallet.user_id == user_id).first()
-        )
-        if not wallet:
-            raise RuntimeError("Wallet not found")
-        if wallet.balance < 10:  # Стоимость предсказания
-            raise RuntimeError("Insufficient funds")
+        #wallet: Optional[Wallet] = (
+        #    session.query(Wallet).filter(Wallet.user_id == user_id).first()
+        #)
+        #if not wallet:
+        #    raise RuntimeError("Wallet not found")
+        #if wallet.balance < 10:  # Стоимость предсказания
+        #    raise RuntimeError("Insufficient funds")
 
-        print(f"Wallet: {wallet.balance}")
+        #print(f"Wallet: {wallet.balance}")
 
         # Списываем средства
-        wallet.balance -= 10
+        #wallet.balance -= 10
         # Создаем запись о транзакции
-        new_transaction = Transaction(
-            user_id=user_id, amount=-10, transaction_type=TransactionType.EXPENSE
-        )
-        session.add(new_transaction)
-        session.flush()
-        session.refresh(new_transaction)
+        #new_transaction = Transaction(
+        #    user_id=user_id, amount=-10, transaction_type=TransactionType.EXPENSE
+        #)
+        #session.add(new_transaction)
+        #session.flush()
+        #session.refresh(new_transaction)
         # Делаем предсказание (заглушка)
         # result = "42"
         # number = 15
@@ -95,7 +95,7 @@ def predict_processing(
         task = Task(
             prediction=prediction,
             model=model,
-            transaction=new_transaction,
+            #transaction=new_transaction,
         )
         session.add(task)
         session.flush()  # Применяем изменения в БД, но не фиксируем
