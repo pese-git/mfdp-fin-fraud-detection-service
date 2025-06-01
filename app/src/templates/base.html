@@ -16,8 +16,8 @@
                 <li><a href="/">Главная</a></li>
                 {% if user %}
                 <li><a href="/dashboard">Личный Кабинет</a></li>
-                <li><a href="/predictions">История Предсказаний</a></li>
-                <li><a href="/predict_iris">Предсказание</a></li>
+                <li><a href="/transactions">Транзакции</a></li>
+                <li><a href="/predict_fin_transaction">Предсказание</a></li>
                 {% if user.roles.name == "admin" %}
                 <li><a href="/users">Пользователи</a></li>
                 {% endif %}

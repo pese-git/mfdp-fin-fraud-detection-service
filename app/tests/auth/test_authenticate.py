@@ -12,7 +12,7 @@ from src.models.wallet import Wallet
 from src.models.transaction import Transaction
 from src.models.task import Task
 from src.models.model import Model
-from src.models.prediction import Prediction
+#from src.models.prediction import Prediction
 
 
 from common.test_router_common import (

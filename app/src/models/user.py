@@ -1,7 +1,11 @@
 from datetime import datetime
 from pydantic import EmailStr
 from sqlmodel import Relationship, SQLModel, Field, text
-from typing import Optional, List
+from typing import TYPE_CHECKING, Optional, List
+
+# Условный импорт для избежания циклических зависимостей
+if TYPE_CHECKING:
+    from models.role import Role
 
 
 class User(SQLModel, table=True):
@@ -30,14 +34,8 @@ class User(SQLModel, table=True):
     hashed_password: str
     is_active: bool = Field(default=True)
     role_id: int = Field(foreign_key="role.id")
-    roles: "Role" = Relationship(back_populates="user")  # type: ignore
+    roles: "Role" = Relationship(back_populates="user")
 
-    #transactions: Optional[List["Transaction"]] = Relationship(back_populates="user")  # type: ignore
-    predictions: Optional[List["Prediction"]] = Relationship(back_populates="user")  # type: ignore
-
-    #wallet: Optional["Wallet"] = Relationship(  # type: ignore
-    #    back_populates="user", cascade_delete=True
-    #)
 
     created_at: datetime = Field(
         default=None,

@@ -46,8 +46,8 @@ def init_db() -> None:
     existing_tables = inspector.get_table_names()
     # Проверяем, есть ли уже существующие таблицы
     if not existing_tables:
-        print("Creating tables...")
-        # SQLModel.metadata.drop_all(engine)
+        print(f"Creating tables {existing_tables}")
+        SQLModel.metadata.drop_all(engine)
         SQLModel.metadata.create_all(engine)
     else:
         print("Tables already exist. No need to recreate them.")

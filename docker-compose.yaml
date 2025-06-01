@@ -10,6 +10,8 @@ services:
     depends_on:
       - db
 #      - rpc_server
+    networks:
+      - event-planner-network
   web:
     build: ./nginx
     ports:
@@ -18,41 +20,73 @@ services:
     depends_on:
       - app
       - db
+    networks:
+      - event-planner-network
 
- # rpc_server:
- #   build: ./rpc_server/
- #   image: rpc-server:v1
- #   scale: 1
- #   env_file:
- #     - ./rpc_server/.env
- #   #    environment:
- #   #      RABBITMQ_HOST: ${RABBITMQ_HOST}
- #   #      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
- #   #      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
- #   #      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
- #   depends_on:
- #     - rabbitmq
- #   restart: always
- # rabbitmq:
- #   image: rabbitmq:3-management
- #   container_name: rabbitmq
- #   ports:
- #     - "5672:5672" # Порт для приложений (AMQP)
- #     - "15672:15672" # Веб-интерфейс (Management)
- #   environment:
- #     RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
- #     RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
- #   volumes:
- #     - ./rabbitmq:/var/lib/rabbitmq
- #   #command: >
- #   #  sh -c "rabbitmq-plugins enable rabbitmq_management && rabbitmq-server"
- #   restart: on-failure
- #   healthcheck:
- #     test: [ "CMD", "rabbitmqctl", "status" ]
- #     interval: 10s
- #     timeout: 10s
- #     retries: 5
- #     start_period: 30s
+#  rpc_server:
+#    build:
+#      context: ./rpc_server/
+#      dockerfile: Dockerfile
+#    platform: linux/amd64
+#    #build: ./rpc_server/
+#    image: rpc-server:v1
+#    scale: 1
+#    env_file:
+#      - ./rpc_server/.env
+#    #    environment:
+#    #      RABBITMQ_HOST: ${RABBITMQ_HOST}
+#    #      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
+#    #      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+#    #      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+#    depends_on:
+#      - rabbitmq
+#    restart: always
+#    networks:
+#      - event-planner-network
+
+  ml_worker:
+    #build: ./ml_worker/
+    build:
+      context: ./ml_worker/
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    image: ml-worker:latest
+    container_name: ml-worker
+    restart: unless-stopped
+
+    volumes:
+      - ./ml_worker:/app
+    depends_on:
+      db:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - event-planner-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672" # Порт для приложений (AMQP)
+      - "15672:15672" # Веб-интерфейс (Management)
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+    #command: >
+    #  sh -c "rabbitmq-plugins enable rabbitmq_management && rabbitmq-server"
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - event-planner-network
+  
   db:
     image: postgres:16-alpine
     volumes:
@@ -65,3 +99,11 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=sa
+    networks:
+      - event-planner-network
+
+
+networks:
+  event-planner-network:
+    name: event-planner-network
+    driver: bridge

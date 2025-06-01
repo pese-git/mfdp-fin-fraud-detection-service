@@ -7,7 +7,6 @@ from sqlmodel import Session
 from src.auth.jwt_handler import create_access_token
 from src.auth.hash_password import HashPassword
 from src.database.database import get_session
-from src.models.prediction import Prediction
 from src.models.user import User
 from src.models.role import Role
 from src.services.crud import user as UserService
@@ -36,7 +35,7 @@ class UserResponse(BaseModel):
     name: str
     email: str | None = None
     #transactions: Optional[List[Transaction]]
-    predictions: Optional[List[Prediction]]
+    #predictions: Optional[List[Prediction]]
     #wallet: Optional[Wallet]
     created_at: datetime
 
@@ -89,9 +88,9 @@ async def signup(
         id=new_user.id,
         name=new_user.name,
         email=new_user.email,
-        wallet=new_user.wallet,
+        #wallet=new_user.wallet,
         transactions=[],
-        predictions=[],
+        #predictions=[],
         created_at=new_user.created_at,
         updated_at=new_user.updated_at,
     )

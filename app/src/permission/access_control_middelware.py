@@ -33,6 +33,7 @@ class AccessControlMiddleware(BaseHTTPMiddleware):
                 "/error",
                 "/api/oauth/signin",
                 "/api/oauth/signup",
+                "/api/predict/send_task_result",
             ]:
                 return await call_next(request)
 

@@ -46,6 +46,7 @@ docker-compose.override.yml
 
 # Local volumes, DB, uploads
 postgres_data/
+rabbitmq/
 media/
 staticfiles/
 uploads/

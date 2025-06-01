@@ -1,8 +1,11 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 from sqlmodel import Field, Relationship, SQLModel, text
 
-
+# Условный импорт для избежания циклических зависимостей
+if TYPE_CHECKING:
+    from models.task import Task
+    
 class Model(SQLModel, table=True):
     """
     Представляет модель базы данных с атрибутами для id, имени и пути.
@@ -23,6 +26,7 @@ class Model(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     name: str = Field(unique=True, nullable=False)
     path: Optional[str]
+    is_active: Optional[bool] = Field(default=False, nullable=False)
 
     tasks: Optional[List["Task"]] = Relationship(back_populates="model")  # type: ignore
 

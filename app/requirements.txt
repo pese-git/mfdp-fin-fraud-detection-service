@@ -27,3 +27,5 @@ httpx==0.28.1
 black==25.1.0
 flake8==7.1.2
 mypy==1.15.0
+
+pandas

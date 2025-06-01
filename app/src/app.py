@@ -8,6 +8,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session
+from src.models.fin_transaction import FinTransaction
+from src.services.crud.fin_transaction import create_fin_transaction
 from src.auth.jwt_handler import verify_access_token
 from src.models.access_policy import AccessPolicy
 from src.models.role import Role
@@ -15,22 +17,22 @@ from src.permission.access_control_middelware import AccessControlMiddleware
 from src.routes.home import home_route
 from src.routes.api.oauth import oauth_route
 from src.routes.api.user import user_router
-from src.routes.api.prediction import prediction_router
+from src.routes.api.fin_transaction import fin_transaction_router
 from src.routes.api.task import task_router
 from src.routes.api.model import model_router
 from src.routes.api.predict import predict_router
 from src.routes.login import login_route
 from src.routes.dashboard import dashboard_route
 from src.routes.register import register_route
-from src.routes.predictions import predictions_route
-from src.routes.predict_iris import predict_iris_route
+from src.routes.transactions_view_router import transactions_view_route
+from src.routes.predict_transactions import predict_transactions_route
 from src.routes.users import users_route
 from src.database.database import get_session, init_db, engine
 from src.models.user import User
 from src.models.model import Model
 from src.services.crud.user import create_user
 from src.services.crud.model import create_model
-from src.services.crud.predict import predict_processing
+#from src.services.crud.predict import predict_processing
 from src.auth.hash_password import HashPassword
 
 
@@ -64,14 +66,14 @@ app.include_router(login_route)
 app.include_router(dashboard_route)
 app.include_router(register_route)
 #app.include_router(balance_route)
-app.include_router(predictions_route)
-app.include_router(predict_iris_route)
+app.include_router(transactions_view_route)
+app.include_router(predict_transactions_route)
 app.include_router(users_route)
 app.include_router(oauth_route, prefix="/api/oauth")
 app.include_router(user_router, prefix="/api/user")
 #app.include_router(wallet_router, prefix="/api/wallet")
 #app.include_router(transaction_router, prefix="/api/transaction")
-app.include_router(prediction_router, prefix="/api/prediction")
+app.include_router(fin_transaction_router, prefix="/api/transaction")
 app.include_router(model_router, prefix="/api/model")
 app.include_router(task_router, prefix="/api/tasks")
 #app.include_router(balance_router, prefix="/api/balance")
@@ -122,13 +124,13 @@ def init_data() -> None:
                 role=user_role, resource="/dashboard", action="GET"
             )
             user_access_predictions_get = AccessPolicy(
-                role=user_role, resource="/predictions", action="GET"
+                role=user_role, resource="/transactions", action="GET"
             )
             user_access_predict_iris_get = AccessPolicy(
-                role=user_role, resource="/predict_iris", action="GET"
+                role=user_role, resource="/predict_fin_transaction", action="GET"
             )
             user_access_predict_iris_post = AccessPolicy(
-                role=user_role, resource="/predict_iris", action="POST"
+                role=user_role, resource="/predict_fin_transaction", action="POST"
             )
 
             user_access_profile_get = AccessPolicy(
@@ -192,9 +194,39 @@ def init_data() -> None:
             create_model(model, session=session)
 
         with Session(engine) as session:
-            predict_processing(
-                user_id=1, model="chatgpt-o4", input_data="Hello world", session=session
+            transaction = FinTransaction(
+                TransactionID=1,
+                TransactionDT=14802349,
+                TransactionAmt=10.1,
+                ProductCD="W",
+                card1=1001,
+                card2=300.0,
+                card3=150.0,
+                card4="visa",
+                card5=220.0,
+                card6="credit",
+                addr1=330.0,
+                addr2=87.0,
+                dist1=2.5,
+                dist2=1.3,
+                P_emaildomain="gmail.com",
+                R_emaildomain="yahoo.com",
+                C=[10, 20, 30],
+                D=[5, 2],
+                M=["T", "F", None],
+                V=[102, 59, 33],
+                IDs=[111, 222, 333],
+                isFraud=None,
+                #created_at=datetime.utcnow(),
+                #updated_at=datetime.utcnow(),
             )
+            print(f'Transaction: {transaction}')
+            create_fin_transaction(
+                transaction, session=session
+            )
+            #predict_processing(
+            #    user_id=1, model="chatgpt-o4", input_data="Hello world", session=session
+            #)
     except Exception as e:
         print(f"Error: {e}")
 
