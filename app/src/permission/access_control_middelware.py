@@ -26,6 +26,7 @@ class AccessControlMiddleware(BaseHTTPMiddleware):
                 "/openapi.json",
                 "/redoc",
                 "/",
+                '/static/bootstrap/css/bootstrap.min.css',
                 "/static/styles.css",
                 "/login",
                 "/logout",

@@ -5,40 +5,47 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}My App{% endblock %}</title>
+    <link
+      href="/static/bootstrap/css/bootstrap.min.css"
+      rel="stylesheet"/>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 
-<body>
-    <header>
-        <h1>ML Service</h1>
-        <nav>
-            <ul>
-                <li><a href="/">Главная</a></li>
-                {% if user %}
-                <li><a href="/dashboard">Личный Кабинет</a></li>
-                <li><a href="/transactions">Транзакции</a></li>
-                <li><a href="/predict_fin_transaction">Предсказание</a></li>
-                {% if user.roles.name == "admin" %}
-                <li><a href="/users">Пользователи</a></li>
-                {% endif %}
-                <li><a href="/logout">Выйти</a></li>
-                {% else %}
-                <li><a href="/login">Войти</a></li>
-                <li><a href="/register">Регистрация</a></li>
-                {% endif %}
-            </ul>
-        </nav>
+<body class="d-flex flex-column min-vh-100">
+    <header class="bg-primary text-white mb-4">
+        <div class="container py-3 d-flex flex-wrap justify-content-between align-items-center">
+            <h1 class="h3 mb-0">ML Service</h1>
+            <nav>
+                <ul class="nav">
+                    <li class="nav-item"><a class="nav-link text-white" href="/">Главная</a></li>
+                    {% if user %}
+                        <li class="nav-item"><a class="nav-link text-white" href="/dashboard">Личный Кабинет</a></li>
+                        <li class="nav-item"><a class="nav-link text-white" href="/transactions">Транзакции</a></li>
+                        <li class="nav-item"><a class="nav-link text-white" href="/predict_fin_transaction">Предсказание</a></li>
+                        {% if user.roles.name == "admin" %}
+                            <li class="nav-item"><a class="nav-link text-white" href="/users">Пользователи</a></li>
+                        {% endif %}
+                        <li class="nav-item"><a class="nav-link text-white" href="/logout">Выйти</a></li>
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link text-white" href="/login">Войти</a></li>
+                        <li class="nav-item"><a class="nav-link text-white" href="/register">Регистрация</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
         {% if user %}
-        <p>Добро пожаловать, {{ user.name }}</p>
+            <div class="bg-secondary text-white text-end pe-4 py-1">
+              Добро пожаловать, {{ user.name }}
+            </div>
         {% endif %}
     </header>
 
-    <main>
+    <main class="container flex-grow-1 py-4">
         {% block content %}{% endblock %}
     </main>
 
-    <footer>
-        <p>© 2025 ML Service</p>
+    <footer class="mt-auto py-3 bg-light border-top text-center">
+        <span class="text-muted">© 2025 ML Service</span>
     </footer>
 </body>
 
