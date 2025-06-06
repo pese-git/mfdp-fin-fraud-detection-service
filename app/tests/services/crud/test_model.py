@@ -10,7 +10,7 @@ from src.services.crud.model import (
     delete_all_models,
 )
 
-from common.test_router_common import session_fixture
+from tests.common.test_router_common import session_fixture
 
 
 def test_create_model(session: Session) -> None:

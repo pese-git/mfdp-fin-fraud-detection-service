@@ -3,11 +3,9 @@ from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 from src.models.role import Role
 from src.models.user import User
-from src.models.wallet import Wallet
-from src.models.transaction import Transaction, TransactionType
+#from src.models.transaction import Transaction, TransactionType
 from src.models.task import Task
 from src.models.model import Model
-#from src.models.prediction import Prediction
 
 from src.services.crud.user import (
     get_all_users,
@@ -18,7 +16,7 @@ from src.services.crud.user import (
     delete_user_by_id,
     delete_all_users,
 )
-from common.test_router_common import (
+from tests.common.test_router_common import (
     client_fixture,
     session_fixture,
     secret_key_fixture,

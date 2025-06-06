@@ -9,10 +9,10 @@ from src.auth.jwt_handler import create_access_token
 from src.database.database import get_session
 from src.app import app
 from src.models.user import User
-from src.models.wallet import Wallet
+#from src.models.wallet import Wallet
 from src.models.role import Role
 from src.services.crud.user import create_user
-from src.services.crud.wallet import create_wallet
+#from src.services.crud.wallet import create_wallet
 
 from src.database.config import get_settings
 
@@ -90,8 +90,8 @@ def create_test_user_fixture(
     )
     create_user(user, session)
 
-    wallet = Wallet(balance=1000, user=user)
-    create_wallet(wallet, session=session)
+    #wallet = Wallet(balance=1000, user=user)
+    #create_wallet(wallet, session=session)
     return user
 
 

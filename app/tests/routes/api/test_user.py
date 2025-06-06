@@ -4,7 +4,7 @@ from fastapi import status
 
 from src.models.role import Role
 from src.models.user import User
-from common.test_router_common import (
+from tests.common.test_router_common import (
     client_fixture,
     session_fixture,
     secret_key_fixture,

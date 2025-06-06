@@ -5,7 +5,8 @@ from sqlmodel import Field, Relationship, SQLModel, text
 # Условный импорт для избежания циклических зависимостей
 if TYPE_CHECKING:
     from models.task import Task
-    
+
+
 class Model(SQLModel, table=True):
     """
     Представляет модель базы данных с атрибутами для id, имени и пути.

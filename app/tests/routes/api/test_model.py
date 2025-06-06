@@ -3,7 +3,7 @@ from sqlmodel import Session
 from fastapi import status
 
 from src.models.model import Model
-from common.test_router_common import (
+from tests.common.test_router_common import (
     client_fixture,
     session_fixture,
     secret_key_fixture,

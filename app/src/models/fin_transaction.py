@@ -1,15 +1,17 @@
+import os
 from typing import TYPE_CHECKING, Optional
 from datetime import datetime
 from click import Option
 from sqlmodel import Field, Relationship, SQLModel
 import sqlalchemy
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy import Null, text
+
+from sqlalchemy import Null, Text, text
 import sqlalchemy as sa
 
 # Условный импорт для избежания циклических зависимостей
 if TYPE_CHECKING:
     from models.task import Task
+
 
 class FinTransaction(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -31,19 +33,19 @@ class FinTransaction(SQLModel, table=True):
     R_emaildomain: Optional[str] = Field(default=None)
 
     C: Optional[list] = Field(
-        sa_column=sqlalchemy.Column(JSONB, nullable=True), default=None,
+        sa_column=sqlalchemy.Column(sqlalchemy.JSON, nullable=True), default=None,
     )
     D: Optional[list] = Field(
-        sa_column=sqlalchemy.Column(JSONB, nullable=True), default=None,
+        sa_column=sqlalchemy.Column(sqlalchemy.JSON, nullable=True), default=None,
     )
     M: Optional[list] = Field(
-        sa_column=sqlalchemy.Column(JSONB, nullable=True), default=None,
+        sa_column=sqlalchemy.Column(sqlalchemy.JSON, nullable=True), default=None,
     )
     V: Optional[list] = Field(
-        sa_column=sqlalchemy.Column(JSONB, nullable=True), default=None,
+        sa_column=sqlalchemy.Column(sqlalchemy.JSON, nullable=True), default=None,
     )
     IDs: Optional[list] = Field(
-        sa_column=sqlalchemy.Column(JSONB, nullable=True), default=None,
+        sa_column=sqlalchemy.Column(sqlalchemy.JSON, nullable=True), default=None,
     )
 
     isFraud: Optional[int] = Field(nullable=True, default=None)

@@ -8,14 +8,11 @@ from src.auth.authenticate import (
 )
 from src.auth.jwt_handler import create_access_token
 from src.models.user import User
-from src.models.wallet import Wallet
-from src.models.transaction import Transaction
 from src.models.task import Task
 from src.models.model import Model
-#from src.models.prediction import Prediction
 
 
-from common.test_router_common import (
+from tests.common.test_router_common import (
     session_fixture,
     secret_key_fixture,
     create_test_user_fixture,
@@ -24,6 +21,7 @@ from common.test_router_common import (
     password_fixture,
     email_fixture,
 )
+
 
 # @pytest.fixture
 # def create_test_user(session: Session):
@@ -35,7 +33,6 @@ from common.test_router_common import (
 # def test_token(create_test_user, secret_key: str):
 #    user_data = {"id": create_test_user.id, "email": create_test_user.email}
 #    return create_access_token(user=user_data, secret_key=secret_key)
-
 
 def test_authenticate(test_token: str, secret_key: str, email: str) -> None:
     user_info = authenticate(test_token, secret_key=secret_key)

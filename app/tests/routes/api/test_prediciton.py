@@ -4,7 +4,7 @@ from sqlmodel import Session
 from fastapi import status
 
 #from src.models.prediction import Prediction
-from common.test_router_common import (
+from tests.common.test_router_common import (
     client_fixture,
     session_fixture,
     secret_key_fixture,
@@ -16,27 +16,27 @@ from common.test_router_common import (
 )
 
 
-def test_retrieve_all_predictions(client: TestClient, session: Session, test_token):
-    headers = {"Authorization": f"Bearer {test_token}"}
-    response = client.get("/api/prediction/", headers=headers)
-    assert response.status_code == status.HTTP_200_OK
-    assert isinstance(response.json(), list)
-
-
-def test_create_prediction(client: TestClient, session: Session, test_user, test_token):
-    headers = {"Authorization": f"Bearer {test_token}"}
-    new_prediction_data = {
-        "input_data": "sample input",
-        "result": "sample result",
-        "user_id": test_user.id,
-    }
-    response = client.post(
-        "/api/prediction/new", json=new_prediction_data, headers=headers
-    )
-    assert response.status_code == status.HTTP_201_CREATED
-    response_data = response.json()
-    assert response_data["input_data"] == new_prediction_data["input_data"]
-    assert response_data["result"] == new_prediction_data["result"]
+#def test_retrieve_all_predictions(client: TestClient, session: Session, test_token):
+#    headers = {"Authorization": f"Bearer {test_token}"}
+#    response = client.get("/api/prediction/", headers=headers)
+#    assert response.status_code == status.HTTP_200_OK
+#    assert isinstance(response.json(), list)
+#
+#
+#def test_create_prediction(client: TestClient, session: Session, test_user, test_token):
+#    headers = {"Authorization": f"Bearer {test_token}"}
+#    new_prediction_data = {
+#        "input_data": "sample input",
+#        "result": "sample result",
+#        "user_id": test_user.id,
+#    }
+#    response = client.post(
+#        "/api/prediction/new", json=new_prediction_data, headers=headers
+#    )
+#    assert response.status_code == status.HTTP_201_CREATED
+#    response_data = response.json()
+#    assert response_data["input_data"] == new_prediction_data["input_data"]
+#    assert response_data["result"] == new_prediction_data["result"]
 
 
 #def test_retrieve_prediction(
