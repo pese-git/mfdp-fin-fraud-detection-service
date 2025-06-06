@@ -3,7 +3,7 @@ from fastapi import HTTPException, Request, status
 from fastapi.security import OAuth2
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel, OAuthFlowPassword
 from fastapi.security.utils import get_authorization_scheme_param
-
+from src.services.logging.logging import get_logger
 
 class OAuth2PasswordBearerWithCookie(OAuth2):
     """
@@ -13,6 +13,8 @@ class OAuth2PasswordBearerWithCookie(OAuth2):
     The only change made is that authentication is taken from a cookie
     instead of from the header!
     """
+
+    logger = get_logger(logger_name="cookieauth")
 
     def __init__(
         self,
@@ -34,13 +36,13 @@ class OAuth2PasswordBearerWithCookie(OAuth2):
         )
 
     async def __call__(self, request: Request) -> Optional[str]:
-        # IMPORTANT: this is the line that differs from FastAPI. Here we use
-        # `request.cookies.get(settings.COOKIE_NAME)` instead of
-        # `request.headers.get("Authorization")`
         authorization: Optional[str] = request.cookies.get("access_token")
+        self.logger.debug("Попытка получения access_token из cookies: %r", authorization)
         scheme, param = get_authorization_scheme_param(authorization)
         if not authorization or scheme.lower() != "bearer":
+            self.logger.warning("Неудачная попытка аутентификации через cookies. Authorization: %r", authorization)
             if self.auto_error:
+                self.logger.error("Рaising HTTPException: Not authenticated")
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Not authenticated",
@@ -48,4 +50,5 @@ class OAuth2PasswordBearerWithCookie(OAuth2):
                 )
             else:
                 return None
+        self.logger.info("Успешно извлечён токен из cookies")
         return param
