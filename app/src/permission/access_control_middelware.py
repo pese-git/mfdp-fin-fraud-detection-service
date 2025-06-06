@@ -10,10 +10,12 @@ from src.database.database import get_session
 from src.models.access_policy import AccessPolicy
 from src.models.role import Role
 from src.permission.access_control import AccessControl
+from src.services.logging.logging import get_logger
 
 from jose import jwt, exceptions
 import re
 
+logger = get_logger(logger_name="permission.access_control_middleware")
 
 class AccessControlMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> JSONResponse:
@@ -36,64 +38,90 @@ class AccessControlMiddleware(BaseHTTPMiddleware):
                 "/api/oauth/signup",
                 "/api/predict/send_task_result",
             ]:
+                logger.debug("Маршрут '%s' не требует проверки доступа.", request.url.path)
                 return await call_next(request)
 
-            # 1️⃣ Сначала пытаемся получить токен из заголовка Authorization
+            # Пытаемся получить токен из заголовка Authorization
             token = request.headers.get("Authorization")
-
-            # 2️⃣ Если в заголовке нет, пробуем извлечь токен из cookie
+            # Если в заголовке нет, пробуем извлечь из cookie
             if not token:
                 token = request.cookies.get("access_token")
-
-            # 3️⃣ Если токен отсутствует, выбрасываем ошибку
+            
+            # Если токен не найден или не начинается с "Bearer ", выбрасываем ошибку
             if token is None or not token.startswith("Bearer "):
+                logger.warning("Не передан токен авторизации для %s", request.url.path)
                 raise HTTPException(
                     status_code=401, detail="Authorization token missing"
                 )
 
-            # декодируем токен
+            # Удаляем "Bearer " из токена
             token = token[7:]
+            logger.debug("Попытка верификации access_token для запроса %s", request.url.path)
+            # Проверяем валидность токена и получаем payload пользователя
             payload = verify_access_token(
                 token=token, secret_key=get_settings().SECRET_KEY
             )
             user_role = payload.get("user").get("role")
+            user_email = payload.get("user").get("email", "unknown")
 
-            # Даем полный доступ админу без проверок
+            logger.info(
+                "Пользователь '%s' с ролью '%s' обращается к %s (%s)",
+                user_email, user_role, request.url.path, request.method
+            )
+
+            # Если пользователь - админ, предоставляем полный доступ без дальнейших проверок
             if user_role == "admin":
+                logger.debug("Пользователь с ролью admin получил полный доступ.")
                 return await call_next(request)
 
-            # Проверяем доступ на основе AccessPolicy
+            # Проверка доступа для остальных ролей
             path = request.url.path
             method = request.method.lower()
-            # Вырезаем UUID из строки
+            # Вырезаем UUID и числовые id для сравнения маршрутов с политиками доступа
             uuid_pattern = re.compile(
                 r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
             )
-            id_pattern = re.compile(
-                r"(\d+)"
-            )
+            id_pattern = re.compile(r"(\d+)")
             clear_path = uuid_pattern.sub("%", path)
             clear_path = id_pattern.sub("%", clear_path)
             role_instance = db.query(Role).filter(Role.name == user_role).first()
-            # SQLAlchemy/SQLModel style query using LIKE correctly
+
+            # Формируем SQL-запрос на доступ по ролям и экшенам
             statement = select(AccessPolicy).where(
                 AccessPolicy.role == role_instance,
-                AccessPolicy.resource.like(clear_path),  # Correct usage of LIKE
+                AccessPolicy.resource.like(clear_path),
                 AccessPolicy.action == method.upper()
             )
-
             policy = db.exec(statement).all()
 
+            # Если политика не найдена, запрещаем доступ
             if not policy:
+                logger.warning(
+                    "Доступ запрещён для пользователя '%s' (%s) к ресурсу %s метод %s",
+                    user_email, user_role, clear_path, method.upper()
+                )
                 raise HTTPException(status_code=403, detail="Forbidden")
-
+            
+            # Доступ разрешён - пишем debug
+            logger.debug(
+                "Доступ разрешён для пользователя '%s' (%s) к %s %s",
+                user_email, user_role, clear_path, method.upper()
+            )
             return await call_next(request)
 
+        # Обработка HTTP ошибок авторизации/доступа
         except HTTPException as e:
+            logger.error(
+                "HTTPException: %s (%s %s)", e.detail, request.method, request.url.path
+            )
             return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
 
+        # Специальная обработка истекшего токена
         except exceptions.ExpiredSignatureError:
+            logger.warning("Token expired при попытке доступа к %s", request.url.path)
             raise HTTPException(status_code=401, detail="Token expired")
 
+        # Обработка других ошибок токена
         except exceptions.JWTError:
+            logger.error("Invalid token при попытке доступа к %s", request.url.path)
             raise HTTPException(status_code=401, detail="Invalid token")
