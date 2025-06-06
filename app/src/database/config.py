@@ -2,6 +2,10 @@ from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
+from src.services.logging.logging import get_logger
+
+
+logger = get_logger(logger_name="database.config")
 
 load_dotenv()
 
@@ -45,10 +49,14 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL_asyncpg(self) -> str:
+        url = f"postgresql+asyncpg://{self.DB_USER}:{'***' if self.DB_PASS else None}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        logger.debug("Сформирован DATABASE_URL_asyncpg: %s", url)
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     @property
     def DATABASE_URL_psycopg(self) -> str:
+        url = f"postgresql+psycopg://{self.DB_USER}:{'***' if self.DB_PASS else None}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        logger.debug("Сформирован DATABASE_URL_psycopg: %s", url)
         return f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     class Config:
@@ -59,4 +67,8 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    return Settings()
+    logger.info("Загрузка настроек из переменных окружения")
+    settings = Settings()
+    logger.info("Настройки успешно загружены: DB_HOST=%s, DB_PORT=%s, DB_USER=%s, DB_NAME=%s", 
+                settings.DB_HOST, settings.DB_PORT, settings.DB_USER, settings.DB_NAME)
+    return settings
