@@ -5,8 +5,12 @@ from src.database.database import get_session
 from src.models.task import Task
 import src.services.crud.task as TaskService
 from typing import Any, List, cast
+from src.services.logging.logging import get_logger
 
 task_router = APIRouter(tags=["Tasks"])
+
+
+logger = get_logger(logger_name='task_router')
 
 
 @task_router.get("/", response_model=List[Task])
@@ -14,16 +18,14 @@ async def retrieve_all_tasks(
     session: Session = Depends(get_session),
     user: dict[str, Any] = Depends(authenticate),
 ) -> List[Task]:
-    """
-    Получить все задачи из базы данных.
-
-    Этот эндпоинт извлекает все доступные задачи из базы данных,
-    используя текущую сессию, предоставленную зависимостью get_session.
-
-    Возвращает:
-        List[Task]: Список всех объектов Task, извлеченных из базы данных.
-    """
-    return cast(List[Task], TaskService.get_all_tasks(session=session))
+    logger.info(f"Пользователь {user.get('email', '[Unknown user]')} запрашивает все задачи")
+    try:
+        tasks = cast(List[Task], TaskService.get_all_tasks(session=session))
+        logger.info(f"Получено задач: {len(tasks)}")
+        return tasks
+    except Exception as e:
+        logger.error(f"Ошибка при получении всех задач: {e}", exc_info=True)
+        raise
 
 
 @task_router.get("/{id}", response_model=Task)
@@ -32,20 +34,13 @@ async def retrieve_task(
     session: Session = Depends(get_session),
     user: dict[str, Any] = Depends(authenticate),
 ) -> Task:
-    """
-    Получить одну задачу по её ID из базы данных.
-
-    Этот эндпоинт извлекает конкретную задачу, идентифицированную предоставленным ID.
-    Он использует текущую сессию, предоставленную зависимостью get_session.
-
-    Аргументы:
-        id (int): Уникальный идентификатор задачи для извлечения.
-        session: Сессия базы данных, используемая для запросов задачи.
-
-    Возвращает:
-        Task: Объект Task, который соответствует предоставленному ID.
-    """
-    return TaskService.get_task_by_id(id, session=session)
+    logger.info(f"Пользователь {user.get('email', '[Unknown user]')} запрашивает задачу id={id}")
+    task = TaskService.get_task_by_id(id, session=session)
+    if not task:
+        logger.warning(f"Задача id={id} не найдена")
+    else:
+        logger.debug(f"Задача id={id} получена: {task}")
+    return task
 
 
 @task_router.post("/new")
@@ -54,22 +49,14 @@ async def create_task(
     session: Session = Depends(get_session),
     user: dict[str, Any] = Depends(authenticate),
 ) -> Task:
-    """
-    Создать новую задачу в базе данных.
-
-    Этот эндпоинт позволяет создать новую задачу, принимая объект Task
-    из тела запроса. Он использует текущую сессию, предоставляемую
-    зависимостью get_session, чтобы добавить задачу в базу данных.
-
-    Аргументы:
-        body (Task): Объект Task, содержащий детали задачи для создания.
-        session: Сессия базы данных, используемая для добавления новой задачи.
-
-    Возвращает:
-        dict: Словарь, содержащий детали вновь созданной задачи.
-    """
-    new_task = TaskService.create_task(body, session=session)
-    return new_task
+    logger.info(f"Пользователь {user.get('email', '[Unknown user]')} создает задачу: {body}")
+    try:
+        new_task = TaskService.create_task(body, session=session)
+        logger.info(f"Задача создана с id={new_task.id}")
+        return new_task
+    except Exception as e:
+        logger.error(f"Ошибка при создании задачи: {e}", exc_info=True)
+        raise
 
 
 @task_router.delete("/{id}")
@@ -78,20 +65,14 @@ async def delete_task(
     session: Session = Depends(get_session),
     user: dict[str, Any] = Depends(authenticate),
 ) -> Task:
-    """
-    Удалить задачу по её ID из базы данных.
-
-    Этот эндпоинт позволяет удалить конкретную задачу, идентифицированную предоставленным ID.
-    Он использует текущую сессию, предоставленную зависимостью get_session.
-
-    Аргументы:
-        id (int): Уникальный идентификатор задачи для удаления.
-        session: Сессия базы данных, используемая для удаления задачи.
-
-    Возвращает:
-        dict: Словарь, указывающий на успешное удаление задачи.
-    """
-    return TaskService.delete_task_by_id(id, session=session)
+    logger.info(f"Пользователь {user.get('email', '[Unknown user]')} удаляет задачу id={id}")
+    try:
+        task = TaskService.delete_task_by_id(id, session=session)
+        logger.info(f"Задача id={id} удалена")
+        return task
+    except Exception as e:
+        logger.error(f"Ошибка при удалении задачи id={id}: {e}", exc_info=True)
+        raise
 
 
 @task_router.delete("/")
@@ -99,17 +80,11 @@ async def delete_tasks(
     session: Session = Depends(get_session),
     user: dict[str, Any] = Depends(authenticate),
 ) -> dict[str, Any]:
-    """
-    Удалить все задачи из базы данных.
-
-    Этот эндпоинт позволяет удалить все задачи, которые в настоящее время хранятся в базе данных.
-    Он полагается на сессию, предоставленную зависимостью get_session, для выполнения операции удаления.
-
-    Аргументы:
-        session: Сессия базы данных, используемая для удаления всех задач.
-
-    Возвращает:
-        dict: Словарь с сообщением, указывающим на то, что все задачи успешно удалены.
-    """
-    TaskService.delete_all_tasks(session=session)
-    return {"message": "Задачи удалены успешно"}
+    logger.info(f"Пользователь {user.get('email', '[Unknown user]')} удаляет все задачи")
+    try:
+        TaskService.delete_all_tasks(session=session)
+        logger.info("Все задачи удалены")
+        return {"message": "Задачи удалены успешно"}
+    except Exception as e:
+        logger.error(f"Ошибка при удалении всех задач: {e}", exc_info=True)
+        raise
