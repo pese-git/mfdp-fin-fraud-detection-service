@@ -27,7 +27,7 @@ async def retrieve_all_transactions(
         записи предсказаний в базе данных.
     """
     return cast(
-        List[FinTransaction], FinTransactionService.get_all_fin_transaction(session=session)
+        List[FinTransaction], FinTransactionService.get_all_fin_transactions(session=session)
     )
 
 

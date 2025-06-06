@@ -29,28 +29,6 @@ def test_retrieve_all_transactions(
     assert isinstance(response.json(), list)
 
 
-#def test_create_transaction(
-#    client: TestClient, session: Session, test_user: User, test_token: str
-#) -> None:
-#    # user, password = create_test_user(session)
-#    # access_token = get_access_token(client, user.email, password)
-#    headers = {"Authorization": f"Bearer {test_token}"}
-#    new_transaction_data = {
-#        "amount": 100,
-#        "transaction_type": "income",
-#        "user_id": test_user.id,
-#    }
-#    response = client.post(
-#        "/api/transaction/new", json=new_transaction_data, headers=headers
-#    )
-#
-#    assert response.status_code == status.HTTP_201_CREATED
-#    response_data = response.json()
-#
-#    assert response_data["amount"] == new_transaction_data["amount"]
-#    assert response_data["transaction_type"] == new_transaction_data["transaction_type"]
-
-
 def test_retrieve_transaction(
     client: TestClient, session: Session, test_user: User, test_token: str
 ) -> None:

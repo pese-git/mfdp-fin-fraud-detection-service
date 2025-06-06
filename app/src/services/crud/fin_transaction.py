@@ -4,7 +4,7 @@ from src.models.fin_transaction import FinTransaction
 from typing import List, Optional
 
 
-def get_all_fin_transaction(session: Session) -> List[FinTransaction]:
+def get_all_fin_transactions(session: Session) -> List[FinTransaction]:
     """
     Получить все записи предсказаний из базы данных.
 
@@ -21,7 +21,7 @@ def get_all_fin_transaction(session: Session) -> List[FinTransaction]:
     return session.query(FinTransaction).all()
 
 
-def get_fin_transaction_by_id(id: int, session: Session) -> Optional[FinTransaction]:
+def get_fin_transaction_by_id(id: int | None, session: Session) -> Optional[FinTransaction]:
     """
     Получить запись предсказания по его ID.
 
@@ -63,7 +63,7 @@ def create_fin_transaction(new_transaction: FinTransaction, session: Session) ->
     return new_transaction
 
 
-def delete_fin_trnsaction_by_id(id: int, session: Session) -> FinTransaction:
+def delete_fin_trnsaction_by_id(id: int | None, session: Session) -> FinTransaction:
     """
     Удалить запись предсказания по его ID.
 
