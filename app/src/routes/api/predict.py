@@ -117,6 +117,7 @@ class TaskResponse(BaseModel):
     result: Optional[PredictionResponse] = None
 
 
+
 @predict_router.post(
     "/task/create",
     response_model=TaskResponse,
@@ -153,31 +154,36 @@ async def create_task(
     user: dict[str, Any] = Depends(authenticate),
 ) -> TaskResponse:
 
+    logger.info(f"Начато создание задачи предсказания пользователем {user.get('email', '[Unknown user]')}")
+    logger.debug(f"Данные получены для задачи: {data}")
+
     try:
         model = session.query(Model).first()
         if not model:
+            logger.error("Модель не найдена в базе")  # <--- logging
             raise HTTPException(status_code=400, detail="Model not found")
         
-        # ГЕНЕРИРУЕМ task_id
         task_id = str(uuid4())
-        # Подготавливаем MLTask (или свою структуру для RabbitMQ)
+        logger.debug(f"Сгенерирован task_id: {task_id}")
+
         mltask = {
             "task_id": task_id,
             "input_data": [pc.dict() for pc in data],
         }
 
-        # Посылаем задачу через RabbitMQClient
+        logger.info(f"Отправка задачи в RabbitMQ: {mltask}")
         rabbit_client.send_task(mltask)
         
-        # Сохраняем новую задачу в БД
         task = Task(
             task_id=task_id, status="init", model=model
         )
         session.add(task)
         session.commit()
+        logger.info(f"Задача {task_id} успешно создана и записана в БД")
 
     except Exception as e:
         session.rollback()
+        logger.error(f"Ошибка при создании задачи: {e}", exc_info=True)
         raise e
 
     return TaskResponse(task_id=task_id)
@@ -196,10 +202,14 @@ async def get_task_status(
     user: dict[str, Any] = Depends(authenticate),
 ) -> TaskStatusResponse:
 
+    logger.info(f"Пользователь {user.get('email', '[Unknown user]')} запрашивает статус задачи {task_id}")
+
     task = session.query(Task).filter(Task.task_id == task_id).first()
     if not task:
+        logger.warning(f"Задача {task_id} не найдена.")
         raise HTTPException(status_code=404, detail="Task not found")
 
+    logger.debug(f"Статус задачи {task_id}: {task.status}")
     return TaskStatusResponse(task_id=task.task_id, status=task.status, result=None)
 
 
@@ -207,7 +217,6 @@ class TaskResultResponse(BaseModel):
     task_id: str
     status: str
     predictions: Optional[List[PredictionResponse]] = None
-
 
 
 
@@ -257,6 +266,7 @@ def fin_transaction_to_prediction_response(obj: FinTransaction) -> PredictionRes
         created_at=obj.created_at,
     )
 
+
 @predict_router.get("/task/result/{task_id}", response_model=TaskResultResponse)
 async def get_task_result(
     task_id: str,
@@ -264,24 +274,29 @@ async def get_task_result(
     user: dict[str, Any] = Depends(authenticate),
 ) -> TaskResultResponse:
 
+    logger.info(f"Пользователь {user.get('email', '[Unknown user]')} запрашивает результат задачи {task_id}")
+
     task = session.query(Task).filter(Task.task_id == task_id).first()
     if not task:
+        logger.warning(f"Задача {task_id} не найдена.")
         raise HTTPException(status_code=404, detail="Task not found")
 
+    logger.debug(f"Текущий статус задачи {task_id}: {task.status}")
     if task.status == "completed":
         transactions = task.fintransaction
         predictions = [fin_transaction_to_prediction_response(tx) for tx in transactions]
+        logger.info(f"Результаты по задаче {task_id} успешно возвращены")
         return TaskResultResponse(
             task_id=task.task_id,
             status=task.status,
             predictions=predictions,
         )
     elif task.status == "failed":
+        logger.error(f"Задача {task_id} завершилась с ошибкой")
         raise HTTPException(status_code=500, detail="Task processing failed")
     else:
+        logger.info(f"Результатов по задаче {task_id} ещё нет, статус: {task.status}")
         return TaskResultResponse(task_id=task.task_id, status=task.status)
-    
-
 
 
 @predict_router.post("/send_task_result", response_model=Dict[str, str])
@@ -314,28 +329,29 @@ async def send_task_result(
             }],
     ),
     session: Session = Depends(get_session),
-    #mltask_service: MLTaskService = Depends(get_mltask_service)
 ) -> Dict[str, str]:
+    logger.info(f"Начата отправка результата задачи task_id={task_id}")
     try:
         task = session.query(Task).filter(Task.task_id == task_id).first()
         if not task:
+            logger.error(f"Задача с task_id={task_id} не найдена")
             raise HTTPException(status_code=400, detail="Task not found")
         
         for pred in data:
             pred_data = pred.dict()
             if "id" in pred_data:
                 pred_data["IDs"] = pred_data.pop("id")
-            # task_id из Task связывается с FinTransaction
             pred_data["task_id"] = task.id
             fin = FinTransaction(**pred_data)
             session.add(fin)
 
-        task.status="success"
-
+        task.status = "success"
         session.commit()
-        logger.info(f"!!!!!!!!Task result has been set: {data}")
+        logger.info(f"Результат задачи {task_id} успешно сохранён в БД")
+        logger.debug(f"Данные результата: {data}")
+
         return {"message": "Task result sent successfully!"}
     except Exception as e:
         session.rollback()
-        logger.error(f"Unexpected error in sending task result: {str(e)}")
+        logger.error(f"Неожиданная ошибка при отправке результата задачи {task_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
