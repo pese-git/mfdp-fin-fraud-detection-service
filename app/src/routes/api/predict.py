@@ -12,7 +12,6 @@ from sqlalchemy import Null, null
 from sqlmodel import Session
 
 from src.models.model import Model
-#from src.services.rpc.rpc_client import RpcClient
 from src.auth.authenticate import authenticate
 from src.database.database import get_session
 from src.models.task import Task

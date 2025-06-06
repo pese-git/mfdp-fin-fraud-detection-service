@@ -7,7 +7,6 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from src.models.model import Model
 from src.models.task import Task
-from src.services.rpc.rpc_client import RpcClient
 from src.database.database import get_session
 from src.auth.authenticate import get_current_user_via_cookies
 from src.schemas import User
@@ -31,7 +30,7 @@ templates = Jinja2Templates(directory=template_dir)
 logger = get_logger(logger_name="routes.predict_transactions")
 
 
-def nan_to_none(x):
+def nan_to_none(x) -> Any | None:
     import pandas as pd
     if pd.isna(x):
         return None
