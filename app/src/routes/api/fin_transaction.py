@@ -32,11 +32,11 @@ async def retrieve_all_transactions(
 
 
 @fin_transaction_router.get("/{id}", response_model=FinTransaction)
-async def retrieve_predict(
+async def retrieve_transaction(
     id: int,
     session: Session = Depends(get_session),
     user: dict[str, Any] = Depends(authenticate),
-) -> FinTransaction:
+) -> FinTransaction | None:
     """
     Получить конкретную запись предсказания по её ID из базы данных.
 
@@ -58,36 +58,36 @@ async def retrieve_predict(
     return FinTransactionService.get_fin_transaction_by_id(id, session=session)
 
 
-@fin_transaction_router.post(
-    "/new", response_model=FinTransaction, status_code=status.HTTP_201_CREATED
-)
-async def create_prediction(
-    body: FinTransaction = Body(...),
-    session: Session = Depends(get_session),
-    user: dict[str, Any] = Depends(authenticate),
-) -> FinTransaction:
-    """
-    Создать новую запись предсказания в базе данных.
-
-    Этот эндпоинт позволяет клиентам создать новую запись предсказания,
-    предоставив необходимые данные в теле запроса. Метод `create_prediction`
-    из сервиса PredictionService используется для сохранения нового предсказания
-    в базе данных. Функция зависит от сессии базы данных, предоставленной
-    зависимостью `get_session`.
-
-    Аргументы:
-        body (Prediction): Данные предсказания для создания, предоставленные в теле запроса.
-        session: Зависимость от сессии базы данных для взаимодействия с базой данных.
-
-    Возвращает:
-        dict: Словарь, содержащий детали вновь созданного предсказания.
-    """
-    new_prediction = FinTransactionService.create_fin_transaction(body, session=session)
-    return new_prediction
+#@fin_transaction_router.post(
+#    "/new", response_model=FinTransaction, status_code=status.HTTP_201_CREATED
+#)
+#async def create_transaction(
+#    body: FinTransaction = Body(...),
+#    session: Session = Depends(get_session),
+#    user: dict[str, Any] = Depends(authenticate),
+#) -> FinTransaction:
+#    """
+#    Создать новую запись предсказания в базе данных.
+#
+#    Этот эндпоинт позволяет клиентам создать новую запись предсказания,
+#    предоставив необходимые данные в теле запроса. Метод `create_prediction`
+#    из сервиса PredictionService используется для сохранения нового предсказания
+#    в базе данных. Функция зависит от сессии базы данных, предоставленной
+#    зависимостью `get_session`.
+#
+#    Аргументы:
+#        body (Prediction): Данные предсказания для создания, предоставленные в теле запроса.
+#        session: Зависимость от сессии базы данных для взаимодействия с базой данных.
+#
+#    Возвращает:
+#        dict: Словарь, содержащий детали вновь созданного предсказания.
+#    """
+#    new_prediction = FinTransactionService.create_fin_transaction(body, session=session)
+#    return new_prediction
 
 
 @fin_transaction_router.delete("/{id}", response_model=FinTransaction)
-async def delete_prediction(
+async def delete_transaction(
     id: int,
     session: Session = Depends(get_session),
     user: dict[str, Any] = Depends(authenticate),
@@ -115,7 +115,7 @@ async def delete_prediction(
 
 
 @fin_transaction_router.delete("/")
-async def delete_all_predictions(
+async def delete_all_transactions(
     session: Session = Depends(get_session),
     user: dict[str, Any] = Depends(authenticate),
 ) -> dict[str, Any]:

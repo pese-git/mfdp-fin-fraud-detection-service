@@ -29,26 +29,26 @@ def test_retrieve_all_transactions(
     assert isinstance(response.json(), list)
 
 
-def test_create_transaction(
-    client: TestClient, session: Session, test_user: User, test_token: str
-) -> None:
-    # user, password = create_test_user(session)
-    # access_token = get_access_token(client, user.email, password)
-    headers = {"Authorization": f"Bearer {test_token}"}
-    new_transaction_data = {
-        "amount": 100,
-        "transaction_type": "income",
-        "user_id": test_user.id,
-    }
-    response = client.post(
-        "/api/transaction/new", json=new_transaction_data, headers=headers
-    )
-
-    assert response.status_code == status.HTTP_201_CREATED
-    response_data = response.json()
-
-    assert response_data["amount"] == new_transaction_data["amount"]
-    assert response_data["transaction_type"] == new_transaction_data["transaction_type"]
+#def test_create_transaction(
+#    client: TestClient, session: Session, test_user: User, test_token: str
+#) -> None:
+#    # user, password = create_test_user(session)
+#    # access_token = get_access_token(client, user.email, password)
+#    headers = {"Authorization": f"Bearer {test_token}"}
+#    new_transaction_data = {
+#        "amount": 100,
+#        "transaction_type": "income",
+#        "user_id": test_user.id,
+#    }
+#    response = client.post(
+#        "/api/transaction/new", json=new_transaction_data, headers=headers
+#    )
+#
+#    assert response.status_code == status.HTTP_201_CREATED
+#    response_data = response.json()
+#
+#    assert response_data["amount"] == new_transaction_data["amount"]
+#    assert response_data["transaction_type"] == new_transaction_data["transaction_type"]
 
 
 def test_retrieve_transaction(
@@ -57,16 +57,24 @@ def test_retrieve_transaction(
     # user, password = create_test_user(session)
     # access_token = get_access_token(client, user.email, password)
     headers = {"Authorization": f"Bearer {test_token}"}
-    new_transaction = Transaction(
-        amount=150, transaction_type=TransactionType.EXPENSE, user_id=test_user.id
+    new_transaction = FinTransaction(
+        TransactionID=12345,
+        TransactionDT=1710000000,
+        TransactionAmt=100.50,
+        ProductCD='W',
+        card1=1111,
+        card2=2222,
+        card4='visa',
+        isFraud=1,
+        task_id=5,
     )
     session.add(new_transaction)
     session.commit()
     response = client.get(f"/api/transaction/{new_transaction.id}", headers=headers)
     assert response.status_code == status.HTTP_200_OK
     transaction_data = response.json()
-    assert transaction_data["amount"] == new_transaction.amount
-    assert transaction_data["transaction_type"] == new_transaction.transaction_type
+    assert transaction_data["TransactionAmt"] == new_transaction.TransactionAmt
+    assert transaction_data["TransactionDT"] == new_transaction.TransactionDT
 
 
 def test_delete_transaction(
@@ -75,8 +83,16 @@ def test_delete_transaction(
     # user, password = create_test_user(session)
     # access_token = get_access_token(client, user.email, password)
     headers = {"Authorization": f"Bearer {test_token}"}
-    new_transaction = Transaction(
-        amount=200, transaction_type=TransactionType.INCOME, user_id=test_user.id
+    new_transaction = FinTransaction(
+        TransactionID=12345,
+        TransactionDT=1710000000,
+        TransactionAmt=100.50,
+        ProductCD='W',
+        card1=1111,
+        card2=2222,
+        card4='visa',
+        isFraud=1,
+        task_id=5,
     )
     session.add(new_transaction)
     session.commit()
@@ -84,7 +100,7 @@ def test_delete_transaction(
 
     response = client.delete(f"/api/transaction/{new_transaction.id}", headers=headers)
     assert response.status_code == status.HTTP_200_OK
-    assert session.get(Transaction, new_transaction.id) is None
+    assert session.get(FinTransaction, new_transaction.id) is None
 
 
 def test_delete_all_transactions(
@@ -94,17 +110,33 @@ def test_delete_all_transactions(
     # access_token = get_access_token(client, user.email, password)
     headers = {"Authorization": f"Bearer {test_token}"}
     session.add(
-        Transaction(
-            amount=100, transaction_type=TransactionType.INCOME, user_id=test_user.id
+        FinTransaction(
+            TransactionID=12345,
+            TransactionDT=1710000000,
+            TransactionAmt=100.50,
+            ProductCD='W',
+            card1=1111,
+            card2=2222,
+            card4='visa',
+            isFraud=1,
+            task_id=5,
         )
     )
     session.add(
-        Transaction(
-            amount=200, transaction_type=TransactionType.EXPENSE, user_id=test_user.id
+        FinTransaction(
+            TransactionID=5431,
+            TransactionDT=1710000000,
+            TransactionAmt=200.50,
+            ProductCD='W',
+            card1=1111,
+            card2=2222,
+            card4='visa',
+            isFraud=1,
+            task_id=5,
         )
     )
     session.commit()
 
     response = client.delete("/api/transaction/", headers=headers)
     assert response.status_code == status.HTTP_200_OK
-    assert session.query(Transaction).count() == 0
+    assert session.query(FinTransaction).count() == 0

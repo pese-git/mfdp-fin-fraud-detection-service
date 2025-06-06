@@ -35,9 +35,9 @@ def get_fin_transaction_by_id(id: int, session: Session) -> Optional[FinTransact
     Возвращает:
         Optional[Prediction]: Экземпляр Prediction, если найден, в противном случае — None.
     """
-    wallet = session.get(FinTransaction, id)
-    if wallet:
-        return wallet
+    transaction = session.get(FinTransaction, id)
+    if transaction:
+        return transaction
     return None
 
 
