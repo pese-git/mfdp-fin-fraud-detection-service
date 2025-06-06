@@ -16,24 +16,13 @@ from src.models.model import Model
 from src.auth.authenticate import authenticate
 from src.database.database import get_session
 from src.models.task import Task
-from src.services.rm.rm import RabbitMQClient, rabbit_client
+from src.services.rm.rm import rabbit_client
 
 logging.getLogger('pika').setLevel(logging.INFO)
 
 logger = get_logger(logger_name=__name__)
 
-#def get_rpc() -> RpcClient:
-#    return RpcClient()
-
-
 class PredictionCreate(BaseModel):
-    """
-    Модель данных для создания запроса предсказания.
-
-    Атрибуты:
-    - model (str): Название модели, которая будет использована для предсказания.
-    - input_data (str): Входные данные, необходимые для выполнения предсказания.
-    """
 
     isFraud: Optional[bool] = None
     TransactionID: int
@@ -89,15 +78,6 @@ class PredictionCreate(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """
-    Модель данных для ответа с предсказанием.
-
-    Атрибуты:
-    - id (int): Уникальный идентификатор записи предсказания.
-    - input_data (str): Данные, которые были использованы для генерации предсказания.
-    - result (str): Результат или исход процесса предсказания.
-    - created_at (datetime): Временная метка, указывающая, когда предсказание было создано.
-    """
 
     id: int
     TransactionID: int
@@ -128,84 +108,7 @@ class PredictionResponse(BaseModel):
 
 
 
-#def make_rpc_call(rpc: RpcClient) -> Any:
-#    def callback(input_data: dict[str, Any]) -> str:
-#        print(f" [x] Запрос на вычисление ({input_data})")
-#        result: str = rpc.call(input_data)
-#        print(f" [.] Получен ответ: {result}")
-#        return result
-#
-#    return callback
-
-
 predict_router = APIRouter(tags=["Model Predict"])
-
-
-# запрос на предсказание
-@predict_router.post(
-    "/",
-    response_model=List[PredictionResponse],
-    description="Создать новое предсказание на основе введенных данных и выбранной модели.",
-)
-async def predict(
-    data: List[PredictionCreate] = Body(
-        ...,
-        example= [{
-                "TransactionID": 2987000,
-                "TransactionDT": 86400,
-                "TransactionAmt": 68.5,
-                "ProductCD": "W",
-                "card1": 13926,
-                "card2": None,
-                "card3": 150.0,
-                "card4": "discover",
-                "card5": 142.0,
-                "card6": "credit",
-                "addr1": 315.0,
-                "addr2": 87.0,
-                "dist1": 19.0,
-                "dist2": None,
-                "P_emaildomain": None,
-                "R_emaildomain": None,
-                "C": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 2.0, 0.0, 1.0, 1.0],
-                "D": [14.0, None, 13.0, None, None, None, None, None, 13.0, 13.0, None, None, 0.0, 0, 0],
-                "M": ["T", "M2", "F", "T", None, None, None, None, None],
-                "V": [1.0 for _ in range(339)],
-                "id": [None for _ in range(27)]
-            }],
-    ),
-    session: Session = Depends(get_session),
-    user: dict[str, Any] = Depends(authenticate),
-    #rpc: RabbitMQClient = Depends(rabbit_client),
-) -> List[PredictionResponse]:
-
-    # 1. Создать задачу и вернуть task_id
-    task_response = await create_task(data, rabbit_client, session, user)
-    task_id = task_response.task_id  # Здесь используем конкретное значение task_id
-
-    start_wait_time = time.time()
-    timeout = 60  # тайм-аут в секундах для задачи
-
-    # 2. Ждать завершения задачи, проверяя её статус
-    while True:
-        status_response = await get_task_status(task_id, session, user)
-        print(status_response)
-
-        if status_response.status == "completed":
-            break
-        elif status_response.status == "failed":
-            raise HTTPException(status_code=500, detail="Task processing failed")
-
-        if time.time() - start_wait_time > timeout:
-            raise HTTPException(status_code=408, detail="Task processing timed out")
-
-        time.sleep(2)  # Ждем 2 секунды перед повторной проверкой статуса
-
-    # 3. Получение и возврат результата
-    result_response = await get_task_result(task_id, session, user)
-
-    # Формирование окончательного ответа пользователю
-    return result_response.predictions
 
 
 class TaskResponse(BaseModel):
@@ -246,7 +149,6 @@ async def create_task(
                 "id": [None for _ in range(27)]
             }],
     ),
-    #rpc: RabbitMQClient = Depends(rabbit_client),
     session: Session = Depends(get_session),
     user: dict[str, Any] = Depends(authenticate),
 ) -> TaskResponse:
@@ -414,14 +316,6 @@ async def send_task_result(
     session: Session = Depends(get_session),
     #mltask_service: MLTaskService = Depends(get_mltask_service)
 ) -> Dict[str, str]:
-    """
-    Endpoint for sending ML task using Result.
-    Args:
-        message (str): The message to be sent.
-        user_id (int): ID of the user creating the task.
-    Returns:
-        Dict[str, str]: Response message with original and processed text.
-    """
     try:
         task = session.query(Task).filter(Task.task_id == task_id).first()
         if not task:

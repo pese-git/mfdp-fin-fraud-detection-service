@@ -12,8 +12,6 @@ from src.database.database import get_session
 from src.auth.authenticate import get_current_user_via_cookies
 from src.schemas import User
 
-
-from src.routes.api.predict import predict as predict_processing
 from src.routes.api.predict import PredictionCreate
 
 from uuid import uuid4
@@ -27,21 +25,6 @@ predict_transactions_route = APIRouter()
 # Jinja2 templates
 template_dir = Path(__file__).parent.parent / "templates"
 templates = Jinja2Templates(directory=template_dir)
-
-
-#def get_rpc() -> RpcClient:
-#    return RpcClient()
-#
-#
-#def make_rpc_call(rpc: RpcClient) -> Any:
-#    def callback(input_data: dict[str, Any]) -> Any:
-#        print(f" [x] Запрос на вычисление ({input_data})")
-#        result = rpc.call(input_data)
-#        print(f" [.] Получен ответ: {result}")
-#        return result
-#
-#    return callback
-#
 
 
 
@@ -75,8 +58,6 @@ def row_to_prediction_dict(row):
         "V": [nan_to_none(row.get(f"V{i}")) for i in range(1, 340)],
         "id": [nan_to_none(row.get(f"id_{str(i).zfill(2)}")) for i in range(1, 28)],
     }
-# Словарь для отображения числовых предсказаний в текстовые названия
-#iris_map = {0: "Setosa", 1: "Versicolor", 2: "Virginica"}
 
 
 @predict_transactions_route.get("/predict_fin_transaction", response_class=HTMLResponse)
@@ -121,7 +102,6 @@ async def predict_fin_transaction(
     transaction_csv: str = Form(...),
     db: Session = Depends(get_session),
     user: User = Depends(get_current_user_via_cookies),
-    #rpc: RpcClient = Depends(get_rpc),
 ) -> HTMLResponse:
     errors = []
     task_id = str(uuid4())
