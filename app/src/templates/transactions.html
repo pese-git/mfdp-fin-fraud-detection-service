@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}История Транзакций{% endblock %}
+{% block content %}
+<h2 class="mb-4">История Транзакций</h2>
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-primary">
+            <tr>
+                <th>Дата</th>
+                <th>TransactionID</th>
+                <th>TransactionAmt</th>
+                <th>ProductCD</th>
+                <th>card1</th>
+                <th>addr1</th>
+                <th>C</th>
+                <th>M</th>
+                <th>isFraud</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in predictions %}
+            <tr>
+                <td>{{ transaction.created_at.strftime('%Y-%m-%d %H:%M:%S') if transaction.created_at else '' }}</td>
+                <td>{{ transaction.TransactionID }}</td>
+                <td>{{ transaction.TransactionAmt }}</td>
+                <td>{{ transaction.ProductCD }}</td>
+                <td>{{ transaction.card1 }}</td>
+                <td>{{ transaction.addr1 }}</td>
+                <td>
+                    {% if transaction.C %}
+                        {{ transaction.C|join(', ') }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if transaction.M %}
+                        {{ transaction.M|join(', ') }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if transaction.isFraud is not none %}
+                        {% if transaction.isFraud == 1 %}
+                            <span class="badge bg-danger">FRAUD</span>
+                        {% else %}
+                            <span class="badge bg-success">OK</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

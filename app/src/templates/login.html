@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Login 🫥{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Вход в Личный кабинет</h2>
+
+                {% for error in errors %}
+                    <div class="alert alert-danger py-2 my-2" role="alert">{{ error }}</div>
+                {% endfor %}
+
+                <form action="/login" method="post" autocomplete="off">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Имя пользователя</label>
+                        <input type="text" class="form-control" id="username" name="username" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Пароль</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Войти</button>
+                    </div>
+                </form>
+                <hr>
+                <div class="text-center">
+                    <a href="/register" class="text-decoration-none">Нет аккаунта? Зарегистрируйтесь</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
