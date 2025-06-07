@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 # Загрузить .env при первом импорте этого модуля
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
+
 @dataclass
 class RabbitMQConfig:
     """

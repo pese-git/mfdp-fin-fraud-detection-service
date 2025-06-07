@@ -1,162 +1,117 @@
 from typing import Any
-from rmq.rmqconf import RabbitMQConfig
-from llm import do_task
 import pika
 import time
 import requests
 import logging
 import json
 
+from rmq.rmqconf import RabbitMQConfig
+from antifraud_model_handler import run_antifraud_task
 from rmq.schemas import PredictionCreate
 
-# Настраиваем общий уровень логирования
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-# Устанавливаем уровень WARNING для логов pika
-logging.getLogger('pika').setLevel(logging.INFO)
-
+# logging конфиг — универсальный стиль
+logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(name)s | %(message)s')
 logger = logging.getLogger(__name__)
+logging.getLogger('pika').setLevel(logging.WARNING)
 
 
-# Определяем основной класс для обработки ML задач
-class MLWorker:
+class RabbitMQLlmWorker:
     """
-    Рабочий класс для обработки ML задач из очереди RabbitMQ.
-    Обеспечивает подключение к очереди и обработку поступающих сообщений.
+    Рабочий ML-класс для получения задач из RabbitMQ, их обработки и отправки результатов.
     """
-    # Константы класса
     MAX_RETRIES = 3
-    RETRY_DELAY = 0.5
+    RETRY_DELAY_SEC = 0.5
     RESULT_ENDPOINT = 'http://app:8080/api/predict/send_task_result'
-    
+
     def __init__(self, config: RabbitMQConfig):
-        """
-        Инициализация обработчика с заданной конфигурацией.
-        
-        Args:
-            config: Объект конфигурации RabbitMQ
-        """
-        # Сохраняем конфигурацию
         self.config = config
-        # Инициализируем соединение как None
         self.connection = None
-        # Инициализируем канал как None
         self.channel = None
-        self.retry_count = 0
-        
+
+    # ==== RabbitMQ setup and teardown ====
     def connect(self) -> None:
-        """
-        Установка соединения с сервером RabbitMQ с повторными попытками.
-        """
+        """Установить соединение с RabbitMQ с повторными попытками."""
         while True:
             try:
-                connection_params = self.config.get_connection_params()
-                self.connection = pika.BlockingConnection(connection_params)
+                params = self.config.get_connection_params()
+                self.connection = pika.BlockingConnection(params)
                 self.channel = self.connection.channel()
                 self.channel.queue_declare(queue=self.config.queue_name)
-                logger.info("Successfully connected to RabbitMQ")
+                logger.info("Connected to RabbitMQ")
                 break
             except Exception as e:
-                logger.error(f"Failed to connect to RabbitMQ: {e}")
-                time.sleep(self.RETRY_DELAY)
+                logger.error(f"RabbitMQ connect error: {e!r}")
+                time.sleep(self.RETRY_DELAY_SEC)
 
-    def cleanup(self) -> None:
-        """Корректное закрытие соединений с RabbitMQ"""
+    def close(self) -> None:
+        """Корректно закрыть канал и соединение."""
         try:
             if self.channel:
                 self.channel.close()
             if self.connection:
                 self.connection.close()
-            logger.info("Соединения успешно закрыты")
-        except Exception as e:
-            logger.error(f"Ошибка при закрытии соединений: {e}")
+            logger.info("RabbitMQ connections closed")
+        except Exception as exc:
+            logger.error(f"Error closing RabbitMQ connection: {exc!r}")
 
-    def send_result(self, task_id: str, result: list[PredictionCreate]) -> bool:
+    # ==== Результаты ====
+    def send_task_result(self, task_id: str, result: list[PredictionCreate]) -> bool:
         """
-        Отправка результатов обработки задачи на сервер.
-        
-        Returns:
-            bool: Признак успешности отправки результата
+        Отправить результат обработки задачи на указанный endpoint.
+        Преобразует PredictionCreate к dict для сериализации.
         """
         try:
-            logger.info(f"#### TASK ID: {task_id}, RESULT: {result}")
+            json_payload = [pred.model_dump() for pred in result]
             response = requests.post(
                 self.RESULT_ENDPOINT,
                 params={'task_id': task_id},
-                json=result
+                json=json_payload
             )
             response.raise_for_status()
+            logger.info(f"Result sent for task {task_id}")
             return True
-        except Exception as e:
-            logger.error(f"Failed to send result: {e}")
+        except Exception as exc:
+            logger.error(f"Result send failed for task {task_id}: {exc!r}")
             return False
 
-    def process_message(self, ch: Any, method: Any, properties: Any, body: Any) -> Any:
+    # ==== Callback ====
+    def process_message(self, ch: Any, method: Any, properties: Any, body: Any) -> None:
         """
-        Обработка полученного сообщения из очереди.
-        
-        Args:
-            ch: Объект канала RabbitMQ
-            method: Метод доставки сообщения
-            properties: Свойства сообщения
-            body: Тело сообщения
-            
-        Note:
-            Симулирует обработку задачи с задержкой в 3 секунды
+        Обработка входящего сообщения из RabbitMQ.
         """
-        try:
-            # Логируем информацию о полученном сообщении
-            logger.info(f"Processing message: {body}")
-            
-            # Декодируем bytes в строку и затем парсим JSON
-            data = json.loads(body.decode('utf-8'))
-            
-            result = do_task(data)
-            
-            logger.info(f"Result: {result}")
-
-            dict_list = [pc.model_dump() for pc in result]
-            
-            if self.send_result(data['task_id'], dict_list):
-                ch.basic_ack(delivery_tag=method.delivery_tag)
-                self.retry_count = 0
-                logger.info("Task completed successfully")
-            else:
-                raise Exception("Failed to send result")
-                
-        except Exception as e:
-            logger.error(f"Error processing message: {e}")
-            self.retry_count += 1
-            
-            if self.retry_count >= self.MAX_RETRIES:
-                logger.error("Max retries reached, rejecting message")
-                ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
-                self.retry_count = 0
-            else:
-                time.sleep(self.RETRY_DELAY)
+        retries = 0
+        while retries < self.MAX_RETRIES:
+            try:
+                logger.info(f"Received message: {body!r}")
+                msg = json.loads(body.decode('utf-8'))
+                result = run_antifraud_task(msg)
+                if self.send_task_result(msg['task_id'], result):
+                    ch.basic_ack(delivery_tag=method.delivery_tag)
+                    logger.info("Task acknowledgment sent")
+                    return
+                else:
+                    raise RuntimeError("Task result send failed")
+            except Exception as exc:
+                retries += 1
+                logger.error(f"Processing error (try {retries}): {exc!r}")
+                if retries >= self.MAX_RETRIES:
+                    logger.error("Max retries reached, message rejected")
+                    ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
+                    return
+                time.sleep(self.RETRY_DELAY_SEC)
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
-            
-    def start_consuming(self) -> None:
-        """
-        Запуск процесса получения сообщений из очереди.
-        
-        Note:
-            Блокирующая операция, прерывается по Ctrl+C
-        """
+
+    def start_worker(self) -> None:
+        """Запуск обработки очереди (блокирующий вызов)."""
         try:
-            # Настраиваем потребление сообщений из очереди
             self.channel.basic_consume(
-                queue=self.config.queue_name,  # Имя очереди
-                on_message_callback=self.process_message,  # Callback для обработки сообщений
-                auto_ack=False  # Отключаем автоматическое подтверждение
+                queue=self.config.queue_name,
+                on_message_callback=self.process_message,
+                auto_ack=False
             )
-            # Логируем информацию о старте потребления сообщений
-            logger.info('Started consuming messages. Press Ctrl+C to exit.')
-            # Запускаем потребление сообщений
+            logger.info("Worker started. Press Ctrl+C to stop.")
             self.channel.start_consuming()
         except KeyboardInterrupt:
-            # Логируем информацию о завершении работы
-            logger.info("Shutting down...")
+            logger.info("Shutting down by user CTRL+C.")
         finally:
-            # Закрываем соединение при завершении работы
-            self.cleanup()
+            self.close()

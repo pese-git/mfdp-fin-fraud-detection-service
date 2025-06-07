@@ -1,5 +1,5 @@
 from rmq.rmqconf import RabbitMQConfig
-from rmq.rmqworker import MLWorker
+from rmq.rmqworker import RabbitMQLlmWorker
 import sys
 import pika
 import time
@@ -14,12 +14,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def create_worker(mode: str, config: RabbitMQConfig) -> MLWorker:
+def create_worker(mode: str, config: RabbitMQConfig) -> RabbitMQLlmWorker:
     """Create appropriate worker instance based on mode."""
-    return MLWorker(config)
+    return RabbitMQLlmWorker(config)
 
 
-def run_worker(worker: MLWorker) -> None:
+def run_worker(worker: RabbitMQLlmWorker) -> None:
     """Run worker with reconnection logic."""
     while True:
         try:
@@ -28,7 +28,7 @@ def run_worker(worker: MLWorker) -> None:
                 worker.connect()
             
             logger.info("Starting message consumption...")
-            worker.start_consuming()
+            worker.start_worker()
             
         except pika.exceptions.AMQPConnectionError as e:
             logger.error(f"Connection error: {e}")
