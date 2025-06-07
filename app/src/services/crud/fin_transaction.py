@@ -2,6 +2,10 @@ from sqlmodel import Session
 from src.models.fin_transaction import FinTransaction
 #from src.models.prediction import Prediction
 from typing import List, Optional
+from src.services.logging.logging import get_logger
+
+
+logger = get_logger(logger_name="FinTransactionCRUD")
 
 
 def get_all_fin_transactions(session: Session) -> List[FinTransaction]:
@@ -18,7 +22,10 @@ def get_all_fin_transactions(session: Session) -> List[FinTransaction]:
     Возвращает:
         List[Prediction]: Список, содержащий все экземпляры Prediction из базы данных.
     """
-    return session.query(FinTransaction).all()
+    logger.info("Запрошен список всех финансовых транзакций")
+    transactions = session.query(FinTransaction).all()
+    logger.debug(f"Найдено {len(transactions)} транзакций")
+    return transactions
 
 
 def get_fin_transaction_by_id(id: int | None, session: Session) -> Optional[FinTransaction]:
@@ -35,9 +42,12 @@ def get_fin_transaction_by_id(id: int | None, session: Session) -> Optional[FinT
     Возвращает:
         Optional[Prediction]: Экземпляр Prediction, если найден, в противном случае — None.
     """
+    logger.info(f"Запрошена финансовая транзакция по id={id}")
     transaction = session.get(FinTransaction, id)
     if transaction:
+        logger.debug(f"Транзакция с id={id} найдена")
         return transaction
+    logger.warning(f"Транзакция с id={id} не найдена")
     return None
 
 
@@ -57,9 +67,11 @@ def create_fin_transaction(new_transaction: FinTransaction, session: Session) ->
     Возвращает:
         None
     """
+    logger.info("Создается новая финансовая транзакция")
     session.add(new_transaction)
     session.commit()
     session.refresh(new_transaction)
+    logger.info(f"Транзакция успешно создана (id={new_transaction.id})")
     return new_transaction
 
 
@@ -83,12 +95,14 @@ def delete_fin_trnsaction_by_id(id: int | None, session: Session) -> FinTransact
     Вызывает:
         Exception: Если Prediction с указанным ID не найден.
     """
+    logger.info(f"Попытка удалить фин. транзакцию с id={id}")
     predict = session.get(FinTransaction, id)
     if not predict:
+        logger.error(f"Транзакция с id={id} не найдена для удаления")
         raise Exception("User not found")
-    # Удаляем предсказание
     session.delete(predict)
     session.commit()
+    logger.info(f"Транзакция с id={id} успешно удалена")
     return predict
 
 
@@ -106,5 +120,7 @@ def delete_all_fin_transactions(session: Session) -> None:
     Возвращает:
         None
     """
-    session.query(FinTransaction).delete()
+    logger.warning("Инициировано удаление всех финансовых транзакций")
+    count = session.query(FinTransaction).delete()
     session.commit()
+    logger.info(f"Удалено {count} транзакций")
