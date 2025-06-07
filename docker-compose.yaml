@@ -24,6 +24,7 @@ services:
       - antifraud-network
 
   antifraud-worker:
+    scale: 3
     #build: ./ml_worker/
     build:
       context: ./ml_worker/
