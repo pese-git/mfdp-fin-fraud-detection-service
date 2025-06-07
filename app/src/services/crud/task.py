@@ -1,6 +1,9 @@
 from sqlmodel import Session
 from src.models.task import Task
 from typing import List, Optional
+from src.services.logging.logging import get_logger
+
+logger = get_logger(logger_name="TaskCRUD")
 
 
 def get_all_tasks(session: Session) -> List[Task]:
@@ -13,7 +16,10 @@ def get_all_tasks(session: Session) -> List[Task]:
     Возвращает:
         Список объектов Task, представляющих все задачи в базе данных.
     """
-    return session.query(Task).all()
+    logger.info("Запрошен список всех задач")
+    tasks = session.query(Task).all()
+    logger.debug(f"Найдено {len(tasks)} задач")
+    return tasks
 
 
 def get_task_by_id(id: int, session: Session) -> Optional[Task]:
@@ -28,7 +34,13 @@ def get_task_by_id(id: int, session: Session) -> Optional[Task]:
         Объект Task, представляющий задачу с указанным ID,
         или None, если таких задач не найдено.
     """
-    return session.get(Task, id)
+    logger.info(f"Запрошена задача по id={id}")
+    task = session.get(Task, id)
+    if task:
+        logger.debug(f"Задача с id={id} найдена")
+        return task
+    logger.warning(f"Задача с id={id} не найдена")
+    return None
 
 
 def create_task(new_task: Task, session: Session) -> Task | None:
@@ -46,9 +58,11 @@ def create_task(new_task: Task, session: Session) -> Task | None:
     транзакцию для сохранения изменений и обновляет объект Task для отражения обновленного
     состояния из базы данных.
     """
+    logger.info("Создается новая задача")
     session.add(new_task)
     session.commit()
     session.refresh(new_task)
+    logger.info(f"Задача успешно создана (id={new_task.id})")
     return new_task
 
 
@@ -70,12 +84,14 @@ def delete_task_by_id(id: int, session: Session) -> Task:
     фиксирует транзакцию для сохранения изменений и возвращает
     удаленный объект Task. Если задача не найдена, вызывается исключение.
     """
+    logger.info(f"Попытка удалить задачу с id={id}")
     task = session.get(Task, id)
     if not task:
+        logger.error(f"Задача с id={id} не найдена для удаления")
         raise Exception("User not found")
-    # Удаляем задачу
     session.delete(task)
     session.commit()
+    logger.info(f"Задача с id={id} успешно удалена")
     return task
 
 
@@ -93,5 +109,7 @@ def delete_all_tasks(session: Session) -> None:
     посредством выполнения массовой операции удаления в таблице Task
     и фиксирует транзакцию для сохранения изменений.
     """
-    session.query(Task).delete()
+    logger.warning("Инициировано удаление всех задач")
+    count = session.query(Task).delete()
     session.commit()
+    logger.info(f"Удалено {count} задач")
