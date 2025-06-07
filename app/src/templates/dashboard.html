@@ -11,6 +11,34 @@
         <li>Всего обработано транзакций: <strong>{{ total_count }}</strong></li>
         <li>Мошеннических операций: <strong>{{ fraud_count }}</strong></li>
         <li>Положительных операций: <strong>{{ good_count }}</strong></li>
+        <li>Пользователей: <strong>{{ user_count }}</strong></li>
     </ul>
 </div>
+
+<div>
+    <h3>Соотношение мошеннических и обычных операций</h3>
+    <canvas id="fraudPieChart" width="400" height="400"></canvas>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('fraudPieChart').getContext('2d');
+    const fraudCount = {{ fraud_count | tojson }};
+    const goodCount = {{ good_count | tojson }};
+
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Мошеннические', 'Обычные'],
+            datasets: [{
+                data: [fraudCount, goodCount],
+                backgroundColor: ['#ff6384', '#36a2eb'],
+            }]
+        },
+        options: {
+            responsive: false
+        }
+    });
+</script>
 {% endblock %}

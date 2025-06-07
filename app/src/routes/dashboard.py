@@ -8,6 +8,7 @@ from sqlmodel import Session
 from src import schemas
 from src.auth.authenticate import get_current_user_via_cookies
 from src.models.fin_transaction import FinTransaction
+from src.models.user import User
 from src.services.logging.logging import get_logger
 
 dashboard_route = APIRouter()
@@ -39,11 +40,13 @@ async def read_dashboard(
     total_count = db.query(FinTransaction).count()
     fraud_count = db.query(FinTransaction).filter(FinTransaction.isFraud == 1).count()  # type: ignore
     good_count = db.query(FinTransaction).filter(FinTransaction.isFraud == 0).count()  # type: ignore
+    user_count = db.query(User).count()
 
     context = {
         "user": current_user,
         "username": current_user.name,
         "request": request,
+        "user_count": user_count,
         "total_count": total_count,
         "fraud_count": fraud_count,
         "good_count": good_count,

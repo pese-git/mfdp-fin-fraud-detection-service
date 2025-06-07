@@ -5,9 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}My App{% endblock %}</title>
-    <link
-      href="/static/bootstrap/css/bootstrap.min.css"
-      rel="stylesheet"/>
+    <link href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 
@@ -19,24 +17,25 @@
                 <ul class="nav">
                     <li class="nav-item"><a class="nav-link text-white" href="/">Главная</a></li>
                     {% if user %}
-                        <li class="nav-item"><a class="nav-link text-white" href="/dashboard">Личный Кабинет</a></li>
-                        <li class="nav-item"><a class="nav-link text-white" href="/transactions">Транзакции</a></li>
-                        <li class="nav-item"><a class="nav-link text-white" href="/predict_fin_transaction">Предсказание</a></li>
-                        {% if user.roles.name == "admin" %}
-                            <li class="nav-item"><a class="nav-link text-white" href="/users">Пользователи</a></li>
-                        {% endif %}
-                        <li class="nav-item"><a class="nav-link text-white" href="/logout">Выйти</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="/dashboard">Личный Кабинет</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="/transactions">Транзакции</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="/predict_fin_transaction">Предсказание</a>
+                    </li>
+                    {% if user.roles.name == "admin" %}
+                    <li class="nav-item"><a class="nav-link text-white" href="/users">Пользователи</a></li>
+                    {% endif %}
+                    <li class="nav-item"><a class="nav-link text-white" href="/logout">Выйти</a></li>
                     {% else %}
-                        <li class="nav-item"><a class="nav-link text-white" href="/login">Войти</a></li>
-                        <li class="nav-item"><a class="nav-link text-white" href="/register">Регистрация</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="/login">Войти</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="/register">Регистрация</a></li>
                     {% endif %}
                 </ul>
             </nav>
         </div>
         {% if user %}
-            <div class="bg-secondary text-white text-end pe-4 py-1">
-              Добро пожаловать, {{ user.name }}
-            </div>
+        <div class="bg-secondary text-white text-end pe-4 py-1">
+            Добро пожаловать, {{ user.name }}
+        </div>
         {% endif %}
     </header>
 
