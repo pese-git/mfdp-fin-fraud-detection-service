@@ -8,13 +8,6 @@ from rpc_model import Model
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def _parse_response(response_text: str) -> str:
-    """Парсит ответ (заглушка для обратной совместимости)
-
-    Оставлен для обратной совместимости. Типы входных/выходных данных могут быть изменены в будущем.
-    """
-    return response_text
-
 
 def _transaction_df_to_json(df: pd.DataFrame) -> List[PredictionCreate]:
     """
@@ -39,7 +32,7 @@ def _transaction_df_to_json(df: pd.DataFrame) -> List[PredictionCreate]:
         record["D"] = [row.get(f"D{i+1}") for i in range(15)]
         record["M"] = [row.get(f"M{i+1}") for i in range(9)]
         record["V"] = [row.get(f"V{i+1}") for i in range(339)]
-        record["IDs"] = [row.get(f"id{i+1}") for i in range(27)] if "id1" in row else [None for _ in range(27)]
+        record["id"] = [row.get(f"id{i+1}") for i in range(27)] if "id1" in row else [None for _ in range(27)]
 
         # Добавить isFraud если он есть
         if "isFraud" in row:
@@ -50,7 +43,8 @@ def _transaction_df_to_json(df: pd.DataFrame) -> List[PredictionCreate]:
 
     return records
 
-def _transaction_json_to_df(data) -> pd.DataFrame:
+
+def _transaction_json_to_df(data: list[dict]) -> pd.DataFrame:
         # Если на вход пришел список — обработать все элементы
         if isinstance(data, list):
             out_list = []
@@ -76,8 +70,8 @@ def _transaction_json_to_df(data) -> pd.DataFrame:
                 for i in range(339):
                     out[f"V{i+1}"] = row["V"][i] if i < len(row["V"]) else None
 
-                # for i in range(27):
-                #     out[f"id{i+1}"] = row["id"][i] if i < len(row["id"]) else None
+                for i in range(27):
+                    out[f"id{i+1}"] = row["id"][i] if i < len(row["id"]) else None
 
                 out_list.append(out)
             df = pd.DataFrame(out_list)
@@ -104,8 +98,8 @@ def _transaction_json_to_df(data) -> pd.DataFrame:
             for i in range(339):
                 out[f"V{i+1}"] = data["V"][i] if i < len(data["V"]) else None
 
-            # for i in range(27):
-            #     out[f"id{i+1}"] = data["id"][i] if i < len(data["id"]) else None
+            for i in range(27):
+                out[f"id{i+1}"] = data["id"][i] if i < len(data["id"]) else None
 
             df = pd.DataFrame([out])
         return df
@@ -114,6 +108,7 @@ def _transaction_json_to_df(data) -> pd.DataFrame:
 
 class AntifraudPredictor:
     """Обёртка для anti-fraud ML модели (инициализация и предикт)."""
+
     def __init__(self):
         self.model = Model()
 

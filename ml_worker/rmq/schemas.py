@@ -28,7 +28,7 @@ class PredictionBase(BaseModel):
     D: List[Optional[Union[float, str]]] = Field(..., min_items=15, max_items=15)
     M: List[Optional[str]] = Field(..., min_items=9, max_items=9)
     V: List[Optional[float]] = Field(..., min_items=339, max_items=339)
-    IDs: List[Optional[Union[str, float]]] = Field(..., min_items=27, max_items=27)
+    id: List[Optional[Union[str, float]]] = Field(..., min_items=27, max_items=27)
 
 
 class PredictionCreate(PredictionBase):

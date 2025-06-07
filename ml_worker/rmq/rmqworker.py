@@ -60,7 +60,7 @@ class MLWorker:
                 logger.error(f"Failed to connect to RabbitMQ: {e}")
                 time.sleep(self.RETRY_DELAY)
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Корректное закрытие соединений с RabbitMQ"""
         try:
             if self.channel:
@@ -91,8 +91,7 @@ class MLWorker:
             logger.error(f"Failed to send result: {e}")
             return False
 
-
-    def process_message(self, ch, method, properties, body) -> Any:
+    def process_message(self, ch: Any, method: Any, properties: Any, body: Any) -> Any:
         """
         Обработка полученного сообщения из очереди.
         
@@ -137,7 +136,6 @@ class MLWorker:
                 time.sleep(self.RETRY_DELAY)
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
             
-
     def start_consuming(self) -> None:
         """
         Запуск процесса получения сообщений из очереди.

@@ -26,10 +26,6 @@ logger = get_logger(logger_name=__name__)
 predict_router = APIRouter(tags=["Model Predict"])
 
 
-
-
-
-
 @predict_router.post(
     "/task/create",
     response_model=TaskResponse,

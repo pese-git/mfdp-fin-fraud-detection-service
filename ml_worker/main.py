@@ -1,6 +1,5 @@
 from rmq.rmqconf import RabbitMQConfig
 from rmq.rmqworker import MLWorker
-from rmq.rpcworker import RPCWorker
 import sys
 import pika
 import time
@@ -14,11 +13,13 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-def create_worker(mode: str, config: RabbitMQConfig):
-    """Create appropriate worker instance based on mode."""
-    return MLWorker(config) if mode == 'ml' else RPCWorker(config)
 
-def run_worker(worker):
+def create_worker(mode: str, config: RabbitMQConfig) -> MLWorker:
+    """Create appropriate worker instance based on mode."""
+    return MLWorker(config)
+
+
+def run_worker(worker: MLWorker) -> None:
     """Run worker with reconnection logic."""
     while True:
         try:
@@ -39,8 +40,9 @@ def run_worker(worker):
         
         time.sleep(1)
 
-def main():
-    mode = 'ml' # Можно использовать rpc
+
+def main() -> int:
+    mode = 'ml'
     logger.info(f"Starting worker in {mode} mode")
     
     worker = None
@@ -52,6 +54,7 @@ def main():
         logger.error(f"Application error: {e}")
         return 1
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
