@@ -24,7 +24,6 @@ services:
       - antifraud-network
 
   antifraud-worker:
-    scale: 3
     #build: ./ml_worker/
     build:
       context: ./ml_worker/
@@ -33,7 +32,8 @@ services:
     image: antifraud-worker:v1.0.0
     env_file:
       - ./ml_worker/.env
-    container_name: antifraud-worker
+    #container_name: antifraud-worker
+    scale: 3
     restart: unless-stopped
 
     volumes:
