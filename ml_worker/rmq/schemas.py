@@ -1,42 +1,9 @@
-from datetime import datetime
+# --- Финансовый Transaction, Prediction ---
+
 from typing import List, Optional, Union
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from sqlmodel import Field
 
-
-# -------- USERS -----------
-
-class UserBase(BaseModel):
-    name: str
-    email: EmailStr
-
-
-class UserCreate(UserBase):
-    password: str
-
-
-class UserRead(UserBase):
-    id: int
-    is_active: bool
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-
-    class Config:
-        orm_mode = True
-
-
-# -------- TOKENS -----------
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    email: Optional[EmailStr] = None
-
-
-# --- Финансовый Transaction, Prediction ---
 
 class PredictionBase(BaseModel):
     TransactionID: int
@@ -92,42 +59,3 @@ class PredictionCreate(PredictionBase):
                 "id": [None for _ in range(27)]
             }
         }
-
-
-class PredictionResponse(PredictionBase):
-    created_at: datetime
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "isFraud": 1,
-                "TransactionID": 2987000,
-                "TransactionDT": 86400,
-                "TransactionAmt": 68.5,
-                "ProductCD": "W",
-                "card1": 13926,
-                "card2": None,
-                "card3": 150.0,
-                "card4": "discover",
-                "card5": 142.0,
-                "card6": "credit",
-                "addr1": 315.0,
-                "addr2": 87.0,
-                "dist1": 19.0,
-                "dist2": None,
-                "P_emaildomain": None,
-                "R_emaildomain": None,
-                "C": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 2.0, 0.0, 1.0, 1.0],
-                "D": [14.0, None, 13.0, None, None, None, None, None, 13.0, 13.0, None, None, 0.0, 0.0, 0.0],
-                "M": ["T", "M2", "F", "T", None, None, None, None, None],
-                "V": [1.0 for _ in range(339)],
-                "id": [None for _ in range(27)],
-                'created_at': "2025-06-07 06:51:17.248"
-            }
-        }
-
-
-class TaskResponse(BaseModel):
-    task_id: str
-    # status: str
-    result: Optional[PredictionResponse] = None

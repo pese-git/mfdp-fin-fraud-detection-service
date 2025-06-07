@@ -10,7 +10,7 @@ from sqlmodel import Session
 from src.models.fin_transaction import FinTransaction
 from src.database.database import get_session
 from src.auth.authenticate import get_current_user_via_cookies
-from src.schemas import  User
+from src.schemas import  UserRead
 from src.services.logging.logging import get_logger
 
 
@@ -27,7 +27,7 @@ logger = get_logger(logger_name="routes.transactions_view")
 async def read_transactions(
     request: Request,
     db: Session = Depends(get_session),
-    user: User = Depends(get_current_user_via_cookies),
+    user: UserRead = Depends(get_current_user_via_cookies),
 ) -> Any:
     logger.info(
         "Пользователь '%s' (id=%s) запрашивает просмотр всех транзакций.",

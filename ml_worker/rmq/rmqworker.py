@@ -1,3 +1,4 @@
+from typing import Any
 from rmq.rmqconf import RabbitMQConfig
 from llm import do_task
 import pika
@@ -6,6 +7,8 @@ import requests
 import logging
 import json
 
+from rmq.schemas import PredictionCreate
+
 # Настраиваем общий уровень логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -13,6 +16,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logging.getLogger('pika').setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
+
 
 # Определяем основной класс для обработки ML задач
 class MLWorker:
@@ -67,7 +71,7 @@ class MLWorker:
         except Exception as e:
             logger.error(f"Ошибка при закрытии соединений: {e}")
 
-    def send_result(self, task_id: str, result: list[dict]) -> bool:
+    def send_result(self, task_id: str, result: list[PredictionCreate]) -> bool:
         """
         Отправка результатов обработки задачи на сервер.
         
@@ -87,7 +91,8 @@ class MLWorker:
             logger.error(f"Failed to send result: {e}")
             return False
 
-    def process_message(self, ch, method, properties, body):
+
+    def process_message(self, ch, method, properties, body) -> Any:
         """
         Обработка полученного сообщения из очереди.
         
@@ -110,8 +115,10 @@ class MLWorker:
             result = do_task(data)
             
             logger.info(f"Result: {result}")
+
+            dict_list = [pc.model_dump() for pc in result]
             
-            if self.send_result(data['task_id'], result):
+            if self.send_result(data['task_id'], dict_list):
                 ch.basic_ack(delivery_tag=method.delivery_tag)
                 self.retry_count = 0
                 logger.info("Task completed successfully")
@@ -130,6 +137,7 @@ class MLWorker:
                 time.sleep(self.RETRY_DELAY)
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
             
+
     def start_consuming(self) -> None:
         """
         Запуск процесса получения сообщений из очереди.

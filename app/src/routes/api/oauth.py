@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
 from sqlmodel import Session
+from schemas import Token, UserCreate, UserRead
 from src.auth.jwt_handler import create_access_token
 from src.auth.hash_password import HashPassword
 from src.database.database import get_session
@@ -20,24 +21,7 @@ def get_secret_key() -> str | None:
     return key
 
 
-class UserBase(BaseModel):
-    name: str
-    email: EmailStr
-    password: str
 
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class UserResponse(BaseModel):
-    id: int
-    name: str
-    email: str | None = None
-    created_at: datetime
-
-    updated_at: datetime
 
 
 # Основной маршрут для работы с OAuth
@@ -50,13 +34,13 @@ logger = get_logger(logger_name='oauth')
 
 @oauth_route.post(
     "/signup",
-    response_model=UserResponse,
+    response_model=UserRead,
     status_code=status.HTTP_201_CREATED,
     response_description="Create a new user",
 )
 async def signup(
-    data: UserBase, session: Session = Depends(get_session)
-) -> UserResponse:
+    data: UserCreate, session: Session = Depends(get_session)
+) -> UserRead:
     logger.info(f"Попытка регистрации пользователя: name={data.name}, email={data.email}")
 
     if UserService.get_user_by_email(data.email, session) is not None:
@@ -87,10 +71,11 @@ async def signup(
     logger.info(f"Успешная регистрация: id={new_user.id}, email={new_user.email}")
 
 
-    return UserResponse(
+    return UserRead(
         id=new_user.id,
         name=new_user.name,
         email=new_user.email,
+        is_active=new_user.is_active,
         # wallet=new_user.wallet,
         transactions=[],
         # predictions=[],
@@ -100,7 +85,7 @@ async def signup(
 
 @oauth_route.post(
     "/signin",
-    response_model=TokenResponse,
+    response_model=Token,
     status_code=status.HTTP_200_OK,
     response_description="User login",
 )

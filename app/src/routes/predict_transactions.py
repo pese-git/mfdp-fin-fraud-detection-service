@@ -9,7 +9,7 @@ from src.models.model import Model
 from src.models.task import Task
 from src.database.database import get_session
 from src.auth.authenticate import get_current_user_via_cookies
-from src.schemas import User
+from src.schemas import UserRead
 
 from src.routes.api.predict import PredictionCreate
 
@@ -35,6 +35,7 @@ def nan_to_none(x) -> Any | None:
     if pd.isna(x):
         return None
     return x
+
 
 def row_to_prediction_dict(row):
     return {
@@ -62,12 +63,13 @@ def row_to_prediction_dict(row):
     }
 
 
+
 @predict_transactions_route.get("/predict_fin_transaction", response_class=HTMLResponse)
 async def read_predict_fin_transaction(
     request: Request,
     task_id: str = None,
     db: Session = Depends(get_session),
-    user: User = Depends(get_current_user_via_cookies),
+    user: UserRead = Depends(get_current_user_via_cookies),
 ) -> HTMLResponse:
     predictions = None
     errors = []
@@ -113,7 +115,7 @@ async def predict_fin_transaction(
     request: Request,
     transaction_csv: str = Form(...),
     db: Session = Depends(get_session),
-    user: User = Depends(get_current_user_via_cookies),
+    user: UserRead = Depends(get_current_user_via_cookies),
 ) -> HTMLResponse:
     errors = []
     task_id = str(uuid4())

@@ -2,6 +2,7 @@ from datetime import datetime
 from fastapi import APIRouter, Body, HTTPException, status, Depends
 from pydantic import BaseModel
 from sqlmodel import Session
+from schemas import UserRead
 from src.auth.hash_password import HashPassword
 from src.auth.authenticate import authenticate
 from src.database.database import get_session
@@ -19,21 +20,13 @@ user_router = APIRouter(tags=["User"])
 logger = get_logger(logger_name="user_router")
 
 
-class UserResponse(BaseModel):
-    id: int
-    name: str
-    email: str | None = None
-    created_at: datetime
-
-    updated_at: datetime
-
 
 @user_router.get(
-    "/profile", response_model=UserResponse, status_code=status.HTTP_200_OK
+    "/profile", response_model=UserRead, status_code=status.HTTP_200_OK
 )
 async def retrieve_profile(
     session: Session = Depends(get_session), user: dict = Depends(authenticate)
-) -> UserResponse:
+) -> UserRead:
     logger.info(f"Пользователь id={user.get('id', '[Unknown]')} запрашивает свой профиль")
     db_user = UserService.get_user_by_id(user["id"], session=session)
     if not db_user:
@@ -43,10 +36,10 @@ async def retrieve_profile(
     return db_user
 
 
-@user_router.get("/", response_model=List[UserResponse], status_code=status.HTTP_200_OK)
+@user_router.get("/", response_model=List[UserRead], status_code=status.HTTP_200_OK)
 async def retrieve_all_users(
     session: Session = Depends(get_session), user: dict = Depends(authenticate)
-) -> List[UserResponse]:
+) -> List[UserRead]:
     logger.info(f"Пользователь id={user.get('id', '[Unknown]')} получает список всех пользователей")
     try:
         users = UserService.get_all_users(session=session)
@@ -57,10 +50,10 @@ async def retrieve_all_users(
         raise
 
 
-@user_router.get("/{id}", response_model=UserResponse, status_code=status.HTTP_200_OK)
+@user_router.get("/{id}", response_model=UserRead, status_code=status.HTTP_200_OK)
 async def retrieve_user(
     id: int, session: Session = Depends(get_session), user: dict = Depends(authenticate)
-) -> UserResponse:
+) -> UserRead:
     logger.info(f"Пользователь id={user.get('id', '[Unknown]')} получает пользователя id={id}")
     db_user = UserService.get_user_by_id(id, session=session)
     if not db_user:
@@ -73,13 +66,13 @@ async def retrieve_user(
 
 
 @user_router.post(
-    "/new", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+    "/new", response_model=UserRead, status_code=status.HTTP_201_CREATED
 )
 async def create_user(
     body: User = Body(...),
     session: Session = Depends(get_session),
     user: dict = Depends(authenticate),
-) -> UserResponse:
+) -> UserRead:
     logger.info(f"Пользователь id={user.get('id', '[Unknown]')} создает нового пользователя (email={body.email})")
     try:
         user_role: Role = session.query(Role).filter_by(name="user").first()
@@ -96,11 +89,11 @@ async def create_user(
 
 
 @user_router.delete(
-    "/{id}", response_model=UserResponse, status_code=status.HTTP_200_OK
+    "/{id}", response_model=UserRead, status_code=status.HTTP_200_OK
 )
 async def delete_user(
     id: int, session: Session = Depends(get_session), user: dict = Depends(authenticate)
-) -> UserResponse:
+) -> UserRead:
     logger.info(f"Пользователь id={user.get('id', '[Unknown]')} удаляет пользователя id={id}")
     db_user = UserService.delete_user_by_id(id, session=session)
     if not db_user:

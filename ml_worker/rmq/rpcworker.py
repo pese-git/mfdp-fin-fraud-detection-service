@@ -15,6 +15,7 @@ logging.getLogger('pika').setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
 
+
 class RPCWorker:
     """
     Рабочий класс для обработки RPC задач из RabbitMQ.
