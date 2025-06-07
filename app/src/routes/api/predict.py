@@ -148,7 +148,7 @@ def fin_transaction_to_prediction_response(obj: FinTransaction) -> PredictionRes
     # Преобразуйте объект FinTransaction к PredictionResponse  
     # (Поля должны полностью совпадать между этими моделями)
     return PredictionResponse(
-        id=obj.id,
+        #id=obj.id,
         TransactionID=obj.TransactionID,
         TransactionDT=obj.TransactionDT,
         TransactionAmt=obj.TransactionAmt,
@@ -170,7 +170,7 @@ def fin_transaction_to_prediction_response(obj: FinTransaction) -> PredictionRes
         D=as_list(obj.D, default_len=15),   # ...
         M=as_list(obj.M, default_len=9),
         V=as_list(obj.V, default_len=339),
-        ids=as_list(getattr(obj, "ids", None), default_len=27),  # если поле называется ids в БД
+        id=as_list(getattr(obj, "ids", None), default_len=27),  # если поле называется ids в БД
         created_at=obj.created_at,
     )
 
@@ -190,7 +190,7 @@ async def get_task_result(
         raise HTTPException(status_code=404, detail="Task not found")
 
     logger.debug(f"Текущий статус задачи {task_id}: {task.status}")
-    if task.status == "completed":
+    if task.status == "success":
         transactions = task.fintransaction
         predictions = [fin_transaction_to_prediction_response(tx) for tx in transactions]
         logger.info(f"Результаты по задаче {task_id} успешно возвращены")
