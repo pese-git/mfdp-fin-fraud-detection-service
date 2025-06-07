@@ -40,8 +40,13 @@ from src.database.config import get_settings
 
 
 from jose import jwt, exceptions
+from src.services.logging.logging import get_logger
+
+logger = get_logger(logger_name="App")
+
 
 app = FastAPI()
+logger.info("FastAPI приложение инициализировано")
 # Adding the AccessControlMiddleware to the app
 app.add_middleware(AccessControlMiddleware)
 
@@ -82,6 +87,7 @@ app.include_router(predict_router, prefix="/api/predict")
 
 @app.get("/error")
 async def error_page(request: Request) -> Any:
+    logger.warning("Пользователь перенаправлен на страницу ошибки")
     context = {"request": request}
     return templates.TemplateResponse("error.html", context)
 
@@ -91,15 +97,16 @@ async def error_page(request: Request) -> Any:
 async def http_exception_handler(
     request: Request, exc: HTTPException
 ) -> JSONResponse | RedirectResponse:
-    # Проверяем, является ли статус 403
+    logger.error(f"HTTPException: {exc.status_code} - {exc.detail}. Path: {request.url.path}")
     if exc.status_code == status.HTTP_403_FORBIDDEN:
+        logger.warning("403 Forbidden. Перенаправление на /error")
         return RedirectResponse(url="/error", status_code=status.HTTP_302_FOUND)
-    # Если другой статус, возвращаем стандартный ответ
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
 def init_data() -> None:
     try:
+        logger.info("Инициализация демо-данных")
         hash_password = HashPassword()
         with Session(engine) as session:
             admin_role = Role(name="admin")
@@ -107,6 +114,7 @@ def init_data() -> None:
             session.add_all([admin_role, user_role])
             session.commit()
             # session.refresh()
+            logger.info("Роли 'admin' и 'user' добавлены")
 
         with Session(engine) as session:
             admin_access_get = AccessPolicy(role=admin_role, resource="*", action="GET")
@@ -173,6 +181,7 @@ def init_data() -> None:
             )
 
             session.commit()
+            logger.info("Права доступа добавлены")
 
         with Session(engine) as session:
             admin = User(
@@ -189,9 +198,15 @@ def init_data() -> None:
             )
             create_user(admin, session=session)
             create_user(demo, session=session)
+            logger.info("Демо-пользователи admin и demo созданы")
 
-            model = Model(name="chatgpt-o4", path="model from")
+            model = Model(
+                name="PyTorch GNN",
+                path="runs:/615587bb4786452e8fc4b9b8cdb69adf/model",
+                is_active=True
+            )
             create_model(model, session=session)
+            logger.info("Демо-модель создана")
 
         with Session(engine) as session:
             transaction = FinTransaction(
@@ -220,18 +235,18 @@ def init_data() -> None:
                 #created_at=datetime.utcnow(),
                 #updated_at=datetime.utcnow(),
             )
-            print(f'Transaction: {transaction}')
             create_fin_transaction(
                 transaction, session=session
             )
-            #predict_processing(
-            #    user_id=1, model="chatgpt-o4", input_data="Hello world", session=session
-            #)
+            logger.info("Демо-транзакция добавлена")
     except Exception as e:
-        print(f"Error: {e}")
+        logger.exception(f"Ошибка инициализации демо-данных: {e}")
 
 
 @app.on_event("startup")
 def on_startup() -> None:
+    logger.info("Запуск приложения: инициализация базы данных и данных")
     init_db()
+    logger.info("База данных инициализирована")
     init_data()
+    logger.info("Данные инициализированы")
