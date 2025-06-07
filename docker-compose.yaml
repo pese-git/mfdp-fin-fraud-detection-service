@@ -1,6 +1,6 @@
 version: "3"
 services:
-  antifraud-app:
+  app:
     build: ./app/
     image: antifraud-app:v1.0.0
     env_file:
@@ -9,7 +9,7 @@ services:
       - ./app:/app
     depends_on:
       - db
-      - antifraud-worker
+      - worker
     networks:
       - antifraud-network
   web:
@@ -18,12 +18,12 @@ services:
       - 80:80
       - 443:443
     depends_on:
-      - antifraud-app
+      - app
       - db
     networks:
       - antifraud-network
 
-  antifraud-worker:
+  worker:
     #build: ./ml_worker/
     build:
       context: ./ml_worker/
