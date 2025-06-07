@@ -1,6 +1,7 @@
-from dataclasses import dataclass
-import pika
 import os
+from dataclasses import dataclass
+
+import pika
 from dotenv import load_dotenv
 from src.services.logging.logging import get_logger
 
@@ -14,7 +15,7 @@ load_dotenv()
 class RabbitMQConfig:
     """
     Конфигурационные параметры для подключения к RabbitMQ.
-    
+
     Атрибуты:
         host: Адрес сервера RabbitMQ
         port: Порт для подключения
@@ -26,22 +27,23 @@ class RabbitMQConfig:
         heartbeat: Интервал проверки соединения в секундах
         connection_timeout: Таймаут подключения в секундах
     """
+
     # Параметры подключения
-    host: str = os.getenv('RABBITMQ_HOST', 'rabbitmq')
-    port: int = int(os.getenv('RABBITMQ_PORT', '5672'))
-    virtual_host: str = os.getenv('RABBITMQ_VHOST', '/')
-    
+    host: str = os.getenv("RABBITMQ_HOST", "rabbitmq")
+    port: int = int(os.getenv("RABBITMQ_PORT", "5672"))
+    virtual_host: str = os.getenv("RABBITMQ_VHOST", "/")
+
     # Параметры аутентификации
-    username: str = os.getenv('RABBITMQ_DEFAULT_USER', 'guest')
-    password: str = os.getenv('RABBITMQ_DEFAULT_PASS', 'guest')
-    
+    username: str = os.getenv("RABBITMQ_DEFAULT_USER", "guest")
+    password: str = os.getenv("RABBITMQ_DEFAULT_PASS", "guest")
+
     # Параметры очередей
-    queue_name: str = os.getenv('RABBITMQ_QUEUE', 'ml_task_queue')
-    rpc_queue_name: str = os.getenv('RABBITMQ_RPC_QUEUE', 'rpc_queue')
-    
+    queue_name: str = os.getenv("RABBITMQ_QUEUE", "ml_task_queue")
+    rpc_queue_name: str = os.getenv("RABBITMQ_RPC_QUEUE", "rpc_queue")
+
     # Параметры соединения
-    heartbeat: int = int(os.getenv('RABBITMQ_HEARTBEAT', '30'))
-    connection_timeout: int = int(os.getenv('RABBITMQ_TIMEOUT', '2'))
+    heartbeat: int = int(os.getenv("RABBITMQ_HEARTBEAT", "30"))
+    connection_timeout: int = int(os.getenv("RABBITMQ_TIMEOUT", "2"))
 
     def __post_init__(self) -> None:
         # Логируем параметры, которыми инициализируется конфиг
@@ -63,12 +65,14 @@ class RabbitMQConfig:
                 port=self.port,
                 virtual_host=self.virtual_host,
                 credentials=pika.PlainCredentials(
-                    username=self.username,
-                    password=self.password
+                    username=self.username, password=self.password
                 ),
                 heartbeat=self.heartbeat,
-                blocked_connection_timeout=self.connection_timeout
+                blocked_connection_timeout=self.connection_timeout,
             )
         except Exception as e:
-            logger.error(f"Ошибка при формировании параметров подключения к RabbitMQ: {e}", exc_info=True)
+            logger.error(
+                f"Ошибка при формировании параметров подключения к RabbitMQ: {e}",
+                exc_info=True,
+            )
             raise

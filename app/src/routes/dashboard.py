@@ -19,7 +19,8 @@ logger = get_logger(logger_name="routes.dashboard")
 
 @dashboard_route.get("/dashboard")
 async def read_dashboard(
-    request: Request, current_user: schemas.UserBase = Depends(get_current_user_via_cookies)
+    request: Request,
+    current_user: schemas.UserBase = Depends(get_current_user_via_cookies),
 ) -> Any:
     """
     Обработчик dashboard-страницы. Добавлено логгирование успешного обращения и информации о пользователе.

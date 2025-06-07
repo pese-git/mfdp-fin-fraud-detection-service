@@ -1,19 +1,32 @@
 import logging
 from typing import Any, Dict, List, Union
-import pandas as pd
 
+import pandas as pd
 from rmq.schemas import PredictionCreate
 from rpc_model import Model
 
 # Логгер для всей библиотеки
-logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(name)s | %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger(__name__)
 
 # === Константы структуры данных ===
 BASE_FIELDS = [
-    "TransactionID", "TransactionDT", "TransactionAmt", "ProductCD",
-    "card1", "card2", "card3", "card4", "card5", "card6",
-    "addr1", "addr2", "dist1", "dist2", "P_emaildomain", "R_emaildomain",
+    "TransactionID",
+    "TransactionDT",
+    "TransactionAmt",
+    "ProductCD",
+    "card1",
+    "card2",
+    "card3",
+    "card4",
+    "card5",
+    "card6",
+    "addr1",
+    "addr2",
+    "dist1",
+    "dist2",
+    "P_emaildomain",
+    "R_emaildomain",
 ]
 ARRAY_SPECS = {
     "C": 14,
@@ -54,11 +67,12 @@ def convert_dataframe_to_predictions(df: pd.DataFrame) -> List[PredictionCreate]
     return predictions
 
 
-def convert_json_to_dataframe(data: Union[List[Dict], Dict]) -> pd.DataFrame:
+def convert_json_to_dataframe(data: Any) -> pd.DataFrame:
     """
     Преобразует список dict (или один dict) с транзакцией в DataFrame.
     Массивные поля конвертируются в плоские столбцы (C1..C14, id1..id27, и т.д.)
     """
+
     def unpack_row(row: Any) -> dict:
         flat = {field: row[field] for field in BASE_FIELDS}
         for array_name, length in ARRAY_SPECS.items():
@@ -75,14 +89,16 @@ def convert_json_to_dataframe(data: Union[List[Dict], Dict]) -> pd.DataFrame:
 
 class AntifraudModelHandler:
     """Обёртка для антифрод модели (инициализация, инференс, сериализация)."""
+
     def __init__(self) -> None:
         self.model = Model()
 
-    def predict_with_metadata(self, input_json: Union[Dict, List[Dict]]) -> List[PredictionCreate]:
+    def predict_with_metadata(self, input_json: Any) -> List[PredictionCreate]:
         """
         Принимает JSON, выполняет предикт, объединяет вход с результатом, возвращает PredictionCreate.
         """
-        df = convert_json_to_dataframe(input_json['input_data'])
+        data = input_json["input_data"]
+        df = convert_json_to_dataframe(data)
         logger.info("Antifraud model input DataFrame shape: %s", df.shape)
         prediction_result = self.model.predict(df)
         df_result = df.copy()

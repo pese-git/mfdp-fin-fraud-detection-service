@@ -1,6 +1,7 @@
+from typing import List, Optional
+
 from sqlmodel import Session
 from src.models.task import Task
-from typing import List, Optional
 from src.services.logging.logging import get_logger
 
 logger = get_logger(logger_name="TaskCRUD")

@@ -1,7 +1,8 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
+
 from pydantic import EmailStr
-from sqlmodel import Relationship, SQLModel, Field, text
-from typing import TYPE_CHECKING, Optional, List
+from sqlmodel import Field, Relationship, SQLModel, text
 
 # Условный импорт для избежания циклических зависимостей
 if TYPE_CHECKING:
@@ -32,16 +33,13 @@ class User(SQLModel, table=True):
     name: str
     email: EmailStr = Field(unique=True, nullable=False)
     hashed_password: str
-    is_active: bool = Field(default=True)
+    is_active: bool = Field(default=True, nullable=False)
     role_id: int = Field(foreign_key="role.id")
     roles: "Role" = Relationship(back_populates="user")
-
 
     created_at: datetime = Field(
         default=None,
         nullable=False,
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
     )
-    updated_at: datetime = Field(
-        default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow}
-    )
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})

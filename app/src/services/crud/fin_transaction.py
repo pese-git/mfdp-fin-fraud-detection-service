@@ -1,9 +1,9 @@
+# from src.models.prediction import Prediction
+from typing import List, Optional
+
 from sqlmodel import Session
 from src.models.fin_transaction import FinTransaction
-#from src.models.prediction import Prediction
-from typing import List, Optional
 from src.services.logging.logging import get_logger
-
 
 logger = get_logger(logger_name="FinTransactionCRUD")
 
@@ -28,7 +28,9 @@ def get_all_fin_transactions(session: Session) -> List[FinTransaction]:
     return transactions
 
 
-def get_fin_transaction_by_id(id: int | None, session: Session) -> Optional[FinTransaction]:
+def get_fin_transaction_by_id(
+    id: int | None, session: Session
+) -> Optional[FinTransaction]:
     """
     Получить запись предсказания по его ID.
 
@@ -51,7 +53,9 @@ def get_fin_transaction_by_id(id: int | None, session: Session) -> Optional[FinT
     return None
 
 
-def create_fin_transaction(new_transaction: FinTransaction, session: Session) -> FinTransaction:
+def create_fin_transaction(
+    new_transaction: FinTransaction, session: Session
+) -> FinTransaction:
     """
     Добавить новую запись предсказания в базу данных.
 

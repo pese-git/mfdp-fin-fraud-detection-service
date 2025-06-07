@@ -1,19 +1,16 @@
-import json
 from pathlib import Path
 from typing import Any
+
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
 from sqlmodel import Session
-
-from src.models.user import User
-from src.database.database import get_session
 from src.auth.authenticate import get_current_user_via_cookies
-
+from src.database.database import get_session
+from src.models.user import User
 from src.services.crud.user import update_user
 from src.services.logging.logging import get_logger
-
 
 users_route = APIRouter()
 # Jinja2 templates
@@ -30,8 +27,11 @@ async def read_users(
     db: Session = Depends(get_session),
     user: User = Depends(get_current_user_via_cookies),
 ) -> Any:
-    logger.info("Пользователь '%s' (id=%s) смотрит список пользователей.",
-                getattr(user, "name", "anonymous"), getattr(user, "id", "unknown"))
+    logger.info(
+        "Пользователь '%s' (id=%s) смотрит список пользователей.",
+        getattr(user, "name", "anonymous"),
+        getattr(user, "id", "unknown"),
+    )
     users = db.query(User).all()
     logger.debug("Получено пользователей: %d", len(users))
     context = {
@@ -49,8 +49,12 @@ async def start_edit_user(
     db: Session = Depends(get_session),
     user: User = Depends(get_current_user_via_cookies),
 ) -> Any:
-    logger.info("Пользователь '%s' (id=%s) открывает форму редактирования пользователя c id=%s.",
-                getattr(user, "name", "anonymous"), getattr(user, "id", "unknown"), id)
+    logger.info(
+        "Пользователь '%s' (id=%s) открывает форму редактирования пользователя c id=%s.",
+        getattr(user, "name", "anonymous"),
+        getattr(user, "id", "unknown"),
+        id,
+    )
     edit_user = db.query(User).filter_by(id=id).first()
     if not edit_user:
         logger.warning("Пользователь c id=%s не найден для редактирования.", id)
@@ -76,9 +80,25 @@ async def end_edit_user(
     message = ""
 
     try:
-        edit_user: User = db.query(User).filter_by(id=id).first()
-        logger.info("Попытка обновить пользователя id=%s (старое имя: '%s', новое имя: '%s').",
-                    id, getattr(edit_user, "name", "не найден"), name)
+        edit_user = db.query(User).filter_by(id=id).first()
+        if not edit_user:
+            message = f"User с id={id} не найден."
+            logger.warning("Пользователь с id=%s не найден для редактирования.", id)
+            context = {
+                "request": request,
+                "user": user,
+                "edit_user": None,
+                "errors": [message],
+                "message": message,
+            }
+            return templates.TemplateResponse("user_edit.html", context)
+
+        logger.info(
+            "Попытка обновить пользователя id=%s (старое имя: '%s', новое имя: '%s').",
+            id,
+            edit_user.name,
+            name,
+        )
 
         edit_user.name = name
         edit_user.email = email
@@ -97,7 +117,7 @@ async def end_edit_user(
         context = {
             "request": request,
             "user": user,
-            "edit_user": edit_user,
+            "edit_user": edit_user if "edit_user" in locals() else None,
             "errors": errors,
             "message": message,
         }

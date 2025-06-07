@@ -1,16 +1,13 @@
-import pytest
-from sqlmodel import SQLModel, Session, create_engine
-from sqlalchemy.pool import StaticPool
+from sqlmodel import Session
 from src.models.task import Task
 from src.services.crud.task import (
+    create_task,
+    delete_all_tasks,
+    delete_task_by_id,
     get_all_tasks,
     get_task_by_id,
-    create_task,
-    delete_task_by_id,
-    delete_all_tasks,
 )
-
-from tests.common.test_router_common import session_fixture
+from tests.common.test_router_common import *
 
 
 def test_create_task(session: Session) -> None:

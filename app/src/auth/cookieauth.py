@@ -1,9 +1,12 @@
 from typing import Optional
+
 from fastapi import HTTPException, Request, status
+from fastapi.openapi.models import OAuthFlowPassword
+from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.security import OAuth2
-from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel, OAuthFlowPassword
 from fastapi.security.utils import get_authorization_scheme_param
 from src.services.logging.logging import get_logger
+
 
 class OAuth2PasswordBearerWithCookie(OAuth2):
     """
@@ -37,10 +40,15 @@ class OAuth2PasswordBearerWithCookie(OAuth2):
 
     async def __call__(self, request: Request) -> Optional[str]:
         authorization: Optional[str] = request.cookies.get("access_token")
-        self.logger.debug("Попытка получения access_token из cookies: %r", authorization)
+        self.logger.debug(
+            "Попытка получения access_token из cookies: %r", authorization
+        )
         scheme, param = get_authorization_scheme_param(authorization)
         if not authorization or scheme.lower() != "bearer":
-            self.logger.warning("Неудачная попытка аутентификации через cookies. Authorization: %r", authorization)
+            self.logger.warning(
+                "Неудачная попытка аутентификации через cookies. Authorization: %r",
+                authorization,
+            )
             if self.auto_error:
                 self.logger.error("Рaising HTTPException: Not authenticated")
                 raise HTTPException(

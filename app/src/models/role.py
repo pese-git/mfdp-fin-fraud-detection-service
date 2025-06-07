@@ -1,10 +1,12 @@
 from typing import TYPE_CHECKING, Optional
-from sqlmodel import Field, SQLModel, Relationship
+
+from sqlmodel import Field, Relationship, SQLModel
 
 # Условный импорт для избежания циклических зависимостей
 if TYPE_CHECKING:
-    from models.user import User
     from models.access_policy import AccessPolicy
+    from models.user import User
+
 
 class Role(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)

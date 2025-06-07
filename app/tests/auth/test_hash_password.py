@@ -1,5 +1,5 @@
-import pytest
 from src.auth.hash_password import HashPassword
+from tests.common.test_router_common import *  # [wildcard-import]
 
 hash_password = HashPassword()
 
@@ -22,6 +22,4 @@ def test_verify_hash() -> None:
 
     # Проверьте, что неправильные пароли не проходят проверку
     assert not hash_password.verify_hash("wrongpassword", hashed)
-    assert not hash_password.verify_hash(
-        "AnotherSecurePassword", hashed
-    )  # Чувствительность к регистру
+    assert not hash_password.verify_hash("AnotherSecurePassword", hashed)  # Чувствительность к регистру

@@ -1,19 +1,9 @@
+from fastapi import status
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from fastapi import status
-
 from src.models.role import Role
 from src.models.user import User
-from tests.common.test_router_common import (
-    client_fixture,
-    session_fixture,
-    secret_key_fixture,
-    create_test_user_fixture,
-    test_token_fixture,
-    username_fixture,
-    password_fixture,
-    email_fixture,
-)
+from tests.common.test_router_common import *
 
 
 def test_retrieve_profile(client: TestClient, test_user: User, test_token: str) -> None:
@@ -44,7 +34,12 @@ def test_create_user(client: TestClient, test_token: str) -> None:
 
 def test_read_users(client: TestClient, session: Session, test_token: str) -> None:
     # Добавьте нескольких пользователей
-    user_role: Role = session.query(Role).filter_by(name="user").first()
+    user_role = session.query(Role).filter_by(name="user").first()
+    if user_role is None:
+        user_role = Role(name="user")
+        session.add(user_role)
+        session.commit()
+        session.refresh(user_role)
 
     session.add(
         User(
@@ -71,15 +66,18 @@ def test_read_users(client: TestClient, session: Session, test_token: str) -> No
     assert len(data) == 3
 
 
-def test_delete_user(
-    client: TestClient, session: Session, test_token: str, test_user: User
-) -> None:
+def test_delete_user(client: TestClient, session: Session, test_token: str, test_user: User) -> None:
     user_role = session.query(Role).filter_by(name="user").first()
+    if user_role is None:
+        user_role = Role(name="user")
+        session.add(user_role)
+        session.commit()
+        session.refresh(user_role)
     user = User(
         name="User One",
         email="one@example.com",
         hashed_password="hashed1",
-        roles=user_role,
+        role_id=user_role.id,
     )
     session.add(user)
     session.commit()
@@ -91,19 +89,22 @@ def test_delete_user(
     assert session.get(User, user.id) is None
 
 
-def test_delete_all_users(
-    client: TestClient, session: Session, test_token: str, test_user: User
-) -> None:
+def test_delete_all_users(client: TestClient, session: Session, test_token: str, test_user: User) -> None:
     headers = {"Authorization": f"Bearer {test_token}"}
 
     # Добавьте нескольких пользователей
     user_role = session.query(Role).filter_by(name="user").first()
+    if user_role is None:
+        user_role = Role(name="user")
+        session.add(user_role)
+        session.commit()
+        session.refresh(user_role)
     session.add(
         User(
             name="User One",
             email="one@example.com",
             hashed_password="hashed1",
-            roles=user_role,
+            role_id=user_role.id,
         )
     )
     session.add(
@@ -111,7 +112,7 @@ def test_delete_all_users(
             name="User Two",
             email="two@example.com",
             hashed_password="hashed2",
-            roles=user_role,
+            role_id=user_role.id,
         )
     )
     session.commit()

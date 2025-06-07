@@ -1,18 +1,15 @@
-import json
 from pathlib import Path
 from typing import Any
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session
-
-
-from src.models.fin_transaction import FinTransaction
-from src.database.database import get_session
 from src.auth.authenticate import get_current_user_via_cookies
-from src.schemas import  UserRead
+from src.database.database import get_session
+from src.models.fin_transaction import FinTransaction
+from src.schemas import UserRead
 from src.services.logging.logging import get_logger
-
 
 transactions_view_route = APIRouter()
 # Jinja2 templates
@@ -32,7 +29,7 @@ async def read_transactions(
     logger.info(
         "Пользователь '%s' (id=%s) запрашивает просмотр всех транзакций.",
         getattr(user, "name", "anonymous"),
-        getattr(user, "id", "unknown")
+        getattr(user, "id", "unknown"),
     )
 
     try:

@@ -1,11 +1,13 @@
 # from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 # from sqlalchemy.orm import Session, sessionmaker
 # from sqlalchemy import URL, create_engine, text
-import sqlalchemy
-from sqlmodel import SQLModel, Session, create_engine
 from typing import Generator
-from .config import get_settings
+
+import sqlalchemy
+from sqlmodel import Session, SQLModel, create_engine
 from src.services.logging.logging import get_logger
+
+from .config import get_settings
 
 logger = get_logger(logger_name="database")
 

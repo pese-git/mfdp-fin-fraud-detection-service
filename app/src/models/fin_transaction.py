@@ -1,12 +1,17 @@
-import os
-from typing import TYPE_CHECKING, Optional
-from datetime import datetime
-from click import Option
-from sqlmodel import Field, Relationship, SQLModel
-import sqlalchemy
+"""Модель SQLModel для финансовых транзакций.
 
-from sqlalchemy import Null, Text, text
+Данный модуль содержит определение модели FinTransaction, которая используется для хранения
+и управления информацией о финансовых транзакциях в системе.
+Модель поддерживает работу с различными свойствами транзакций (идентификаторы карт, адреса, суммы, домены email,
+векторные признаки и пр.), а также связывает транзакцию с задачей (Task).
+"""
+
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, List, Optional
+
 import sqlalchemy as sa
+from sqlalchemy import text
+from sqlmodel import Field, Relationship, SQLModel
 
 # Условный импорт для избежания циклических зависимостей
 if TYPE_CHECKING:
@@ -32,27 +37,30 @@ class FinTransaction(SQLModel, table=True):
     P_emaildomain: Optional[str] = Field(default=None)
     R_emaildomain: Optional[str] = Field(default=None)
 
-    C: Optional[list] = Field(
-        sa_column=sqlalchemy.Column(sqlalchemy.JSON, nullable=True), default=None,
+    C: Optional[List[Any]] = Field(
+        sa_column=sa.Column(sa.JSON, nullable=True),
+        default=None,
     )
-    D: Optional[list] = Field(
-        sa_column=sqlalchemy.Column(sqlalchemy.JSON, nullable=True), default=None,
+    D: Optional[List[Any]] = Field(
+        sa_column=sa.Column(sa.JSON, nullable=True),
+        default=None,
     )
-    M: Optional[list] = Field(
-        sa_column=sqlalchemy.Column(sqlalchemy.JSON, nullable=True), default=None,
+    M: Optional[List[Any]] = Field(
+        sa_column=sa.Column(sa.JSON, nullable=True),
+        default=None,
     )
-    V: Optional[list] = Field(
-        sa_column=sqlalchemy.Column(sqlalchemy.JSON, nullable=True), default=None,
+    V: Optional[List[Any]] = Field(
+        sa_column=sa.Column(sa.JSON, nullable=True),
+        default=None,
     )
-    IDs: Optional[list] = Field(
-        sa_column=sqlalchemy.Column(sqlalchemy.JSON, nullable=True), default=None,
+    IDs: Optional[List[Any]] = Field(
+        sa_column=sa.Column(sa.JSON, nullable=True),
+        default=None,
     )
 
     isFraud: Optional[int] = Field(nullable=True, default=None)
 
-    task_id: Optional[int] = Field(
-        sa_column=sa.Column(sa.Integer, sa.ForeignKey("task.id", ondelete="CASCADE"))
-    )
+    task_id: Optional[int] = Field(sa_column=sa.Column(sa.Integer, sa.ForeignKey("task.id", ondelete="CASCADE")))
     task: Optional["Task"] = Relationship(back_populates="fintransaction")
 
     created_at: datetime = Field(

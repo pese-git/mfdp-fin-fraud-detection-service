@@ -1,19 +1,9 @@
 import uuid
+
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from fastapi import status
-
 from src.models.task import Task
-from tests.common.test_router_common import (
-    client_fixture,
-    session_fixture,
-    secret_key_fixture,
-    create_test_user_fixture,
-    test_token_fixture,
-    username_fixture,
-    password_fixture,
-    email_fixture,
-)
+from tests.common.test_router_common import *
 
 
 def test_retrieve_all_tasks(client: TestClient, test_token: str) -> None:
@@ -68,9 +58,7 @@ def test_delete_task(client: TestClient, session: Session, test_token: str) -> N
     assert session.get(Task, new_task.id) is None
 
 
-def test_delete_all_tasks(
-    client: TestClient, session: Session, test_token: str
-) -> None:
+def test_delete_all_tasks(client: TestClient, session: Session, test_token: str) -> None:
     headers = {"Authorization": f"Bearer {test_token}"}
     task_id_1 = "{}".format(uuid.uuid4())
     task_id_2 = "{}".format(uuid.uuid4())

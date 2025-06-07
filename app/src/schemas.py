@@ -1,10 +1,11 @@
 from datetime import datetime
 from typing import List, Optional, Union
+
 from pydantic import BaseModel, EmailStr
 from sqlmodel import Field
 
-
 # -------- USERS -----------
+
 
 class UserBase(BaseModel):
     name: str
@@ -14,6 +15,9 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+    class Config:
+        from_attributes = True
+
 
 class UserRead(UserBase):
     id: int
@@ -22,10 +26,11 @@ class UserRead(UserBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # -------- TOKENS -----------
+
 
 class Token(BaseModel):
     access_token: str
@@ -37,6 +42,7 @@ class TokenData(BaseModel):
 
 
 # --- Финансовый Transaction, Prediction ---
+
 
 class PredictionBase(BaseModel):
     TransactionID: int
@@ -55,7 +61,7 @@ class PredictionBase(BaseModel):
     dist2: Optional[float] = None
     P_emaildomain: Optional[str] = None
     R_emaildomain: Optional[str] = None
-    isFraud: Optional[bool] = None
+    isFraud: Optional[int] = None
 
     C: List[Optional[float]] = Field(..., min_items=14, max_items=14)
     D: List[Optional[Union[float, str]]] = Field(..., min_items=15, max_items=15)
@@ -85,11 +91,42 @@ class PredictionCreate(PredictionBase):
                 "dist2": None,
                 "P_emaildomain": None,
                 "R_emaildomain": None,
-                "C": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 2.0, 0.0, 1.0, 1.0],
-                "D": [14.0, None, 13.0, None, None, None, None, None, 13.0, 13.0, None, None, 0.0, 0.0, 0.0],
+                "C": [
+                    1.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    2.0,
+                    0.0,
+                    1.0,
+                    1.0,
+                ],
+                "D": [
+                    14.0,
+                    None,
+                    13.0,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    13.0,
+                    13.0,
+                    None,
+                    None,
+                    0.0,
+                    0.0,
+                    0.0,
+                ],
                 "M": ["T", "M2", "F", "T", None, None, None, None, None],
                 "V": [1.0 for _ in range(339)],
-                "id": [None for _ in range(27)]
+                "id": [None for _ in range(27)],
             }
         }
 
@@ -117,17 +154,51 @@ class PredictionResponse(PredictionBase):
                 "dist2": None,
                 "P_emaildomain": None,
                 "R_emaildomain": None,
-                "C": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 2.0, 0.0, 1.0, 1.0],
-                "D": [14.0, None, 13.0, None, None, None, None, None, 13.0, 13.0, None, None, 0.0, 0.0, 0.0],
+                "C": [
+                    1.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    2.0,
+                    0.0,
+                    1.0,
+                    1.0,
+                ],
+                "D": [
+                    14.0,
+                    None,
+                    13.0,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    13.0,
+                    13.0,
+                    None,
+                    None,
+                    0.0,
+                    0.0,
+                    0.0,
+                ],
                 "M": ["T", "M2", "F", "T", None, None, None, None, None],
                 "V": [1.0 for _ in range(339)],
                 "id": [None for _ in range(27)],
-                'created_at': "2025-06-07 06:51:17.248"
+                "created_at": "2025-06-07 06:51:17.248",
             }
         }
 
 
 class TaskResponse(BaseModel):
     task_id: str
-    # status: str
+    status: str
     result: Optional[PredictionResponse] = None
+
+    class Config:
+        from_attributes = True

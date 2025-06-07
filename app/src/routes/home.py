@@ -1,14 +1,14 @@
 import os
 from pathlib import Path
 from typing import Any
+
+import markdown
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-import markdown
 from src.auth.authenticate import authenticate_via_cookies
-from src.services.logging.logging import get_logger
-
 from src.models.user import User
+from src.services.logging.logging import get_logger
 
 home_route = APIRouter()
 
@@ -33,7 +33,9 @@ async def index(
     # Проверяем, существует ли файл
     if not os.path.exists(markdown_file_path):
         html_content = "<h1>Markdown file not found.</h1>"
-        logger.error("Markdown файл '%s' не найден при обращении к /", markdown_file_path)
+        logger.error(
+            "Markdown файл '%s' не найден при обращении к /", markdown_file_path
+        )
     else:
         try:
             # Чтение и обработка Markdown файла
@@ -41,9 +43,13 @@ async def index(
                 markdown_content = md_file.read()
                 # Конвертация Markdown в HTML
                 html_content = markdown.markdown(markdown_content)
-            logger.debug("Markdown файл '%s' успешно загружен и отрендерен.", markdown_file_path)
+            logger.debug(
+                "Markdown файл '%s' успешно загружен и отрендерен.", markdown_file_path
+            )
         except Exception as e:
-            logger.exception("Ошибка при чтении Markdown файла '%s': %s", markdown_file_path, e)
+            logger.exception(
+                "Ошибка при чтении Markdown файла '%s': %s", markdown_file_path, e
+            )
             html_content = "<h1>Error loading content.</h1>"
 
     logger.info(

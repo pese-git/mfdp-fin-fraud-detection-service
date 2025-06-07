@@ -1,24 +1,21 @@
-import logging
-from datetime import datetime
 import json
-import time
-from typing import Any, Callable, Dict, List, Optional, Union
+import logging
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
-from schemas import PredictionCreate, PredictionResponse, TaskResponse
-from src.services.logging.logging import get_logger
-from src.models.fin_transaction import FinTransaction
-from fastapi import APIRouter, Depends, HTTPException, Body
-from pydantic import BaseModel, Field
-from sqlalchemy import Null, null
-from sqlmodel import Session
 
-from src.models.model import Model
+from fastapi import APIRouter, Body, Depends, HTTPException
+from pydantic import BaseModel
+from schemas import PredictionCreate, PredictionResponse, TaskResponse
+from sqlmodel import Session
 from src.auth.authenticate import authenticate
 from src.database.database import get_session
+from src.models.fin_transaction import FinTransaction
+from src.models.model import Model
 from src.models.task import Task
+from src.services.logging.logging import get_logger
 from src.services.rm.rm import rabbit_client
 
-logging.getLogger('pika').setLevel(logging.INFO)
+logging.getLogger("pika").setLevel(logging.INFO)
 
 logger = get_logger(logger_name=__name__)
 
@@ -34,7 +31,8 @@ predict_router = APIRouter(tags=["Model Predict"])
 async def create_task(
     data: List[PredictionCreate] = Body(
         ...,
-        example= [{
+        example=[
+            {
                 "TransactionID": 2987000,
                 "TransactionDT": 86400,
                 "TransactionAmt": 68.5,
@@ -51,12 +49,44 @@ async def create_task(
                 "dist2": None,
                 "P_emaildomain": None,
                 "R_emaildomain": None,
-                "C": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 2.0, 0.0, 1.0, 1.0],
-                "D": [14.0, None, 13.0, None, None, None, None, None, 13.0, 13.0, None, None, 0.0, 0, 0],
+                "C": [
+                    1.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    2.0,
+                    0.0,
+                    1.0,
+                    1.0,
+                ],
+                "D": [
+                    14.0,
+                    None,
+                    13.0,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    13.0,
+                    13.0,
+                    None,
+                    None,
+                    0.0,
+                    0,
+                    0,
+                ],
                 "M": ["T", "M2", "F", "T", None, None, None, None, None],
                 "V": [1.0 for _ in range(339)],
-                "id": [None for _ in range(27)]
-            }],
+                "id": [None for _ in range(27)],
+            }
+        ],
     ),
     session: Session = Depends(get_session),
     user: dict[str, Any] = Depends(authenticate),
@@ -70,7 +100,7 @@ async def create_task(
         if not model:
             logger.error("Модель не найдена в базе")  # <--- logging
             raise HTTPException(status_code=400, detail="Model not found")
-        
+
         task_id = str(uuid4())
         logger.debug(f"Сгенерирован task_id: {task_id}")
 
@@ -81,10 +111,8 @@ async def create_task(
 
         logger.info(f"Отправка задачи в RabbitMQ: {mltask}")
         rabbit_client.send_task(mltask)
-        
-        task = Task(
-            task_id=task_id, status="init", model=model
-        )
+
+        task = Task(task_id=task_id, status="init", model=model)
         session.add(task)
         session.commit()
         logger.info(f"Задача {task_id} успешно создана и записана в БД")
@@ -94,7 +122,7 @@ async def create_task(
         logger.error(f"Ошибка при создании задачи: {e}", exc_info=True)
         raise e
 
-    return TaskResponse(task_id=task_id)
+    return TaskResponse.from_orm(task)
 
 
 class TaskStatusResponse(BaseModel):
@@ -112,7 +140,7 @@ async def get_task_status(
 
     logger.info(f"Пользователь {user.get('email', '[Unknown user]')} запрашивает статус задачи {task_id}")
 
-    task = session.query(Task).filter(Task.task_id == task_id).first()
+    task = session.query(Task).filter(Task.task_id == task_id).first()  # type: ignore[arg-type]
     if not task:
         logger.warning(f"Задача {task_id} не найдена.")
         raise HTTPException(status_code=404, detail="Task not found")
@@ -127,8 +155,7 @@ class TaskResultResponse(BaseModel):
     predictions: Optional[List[PredictionResponse]] = None
 
 
-
-def as_list(value, default_len=None) -> list:
+def as_list(value: Any, default_len: Any = None) -> list:
     if value is None:
         return [None] * default_len if default_len else []
     if isinstance(value, list):
@@ -145,10 +172,10 @@ def as_list(value, default_len=None) -> list:
 
 
 def fin_transaction_to_prediction_response(obj: FinTransaction) -> PredictionResponse:
-    # Преобразуйте объект FinTransaction к PredictionResponse  
+    # Преобразуйте объект FinTransaction к PredictionResponse
     # (Поля должны полностью совпадать между этими моделями)
     return PredictionResponse(
-        #id=obj.id,
+        # id=obj.id,
         TransactionID=obj.TransactionID,
         TransactionDT=obj.TransactionDT,
         TransactionAmt=obj.TransactionAmt,
@@ -166,8 +193,8 @@ def fin_transaction_to_prediction_response(obj: FinTransaction) -> PredictionRes
         P_emaildomain=obj.P_emaildomain,
         R_emaildomain=obj.R_emaildomain,
         isFraud=obj.isFraud,
-        C=as_list(obj.C, default_len=14),   # Гарантируем список из 14 элементов
-        D=as_list(obj.D, default_len=15),   # ...
+        C=as_list(obj.C, default_len=14),  # Гарантируем список из 14 элементов
+        D=as_list(obj.D, default_len=15),  # ...
         M=as_list(obj.M, default_len=9),
         V=as_list(obj.V, default_len=339),
         id=as_list(getattr(obj, "ids", None), default_len=27),  # если поле называется ids в БД
@@ -184,7 +211,7 @@ async def get_task_result(
 
     logger.info(f"Пользователь {user.get('email', '[Unknown user]')} запрашивает результат задачи {task_id}")
 
-    task = session.query(Task).filter(Task.task_id == task_id).first()
+    task = session.query(Task).filter(Task.task_id == task_id).first()  # type: ignore[arg-type]
     if not task:
         logger.warning(f"Задача {task_id} не найдена.")
         raise HTTPException(status_code=404, detail="Task not found")
@@ -212,7 +239,8 @@ async def send_task_result(
     task_id: str,
     data: List[PredictionCreate] = Body(
         ...,
-        example= [{
+        example=[
+            {
                 "TransactionID": 2987000,
                 "TransactionDT": 86400,
                 "TransactionAmt": 68.5,
@@ -229,22 +257,54 @@ async def send_task_result(
                 "dist2": None,
                 "P_emaildomain": None,
                 "R_emaildomain": None,
-                "C": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 2.0, 0.0, 1.0, 1.0],
-                "D": [14.0, None, 13.0, None, None, None, None, None, 13.0, 13.0, None, None, 0.0, 0, 0],
+                "C": [
+                    1.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    2.0,
+                    0.0,
+                    1.0,
+                    1.0,
+                ],
+                "D": [
+                    14.0,
+                    None,
+                    13.0,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    13.0,
+                    13.0,
+                    None,
+                    None,
+                    0.0,
+                    0,
+                    0,
+                ],
                 "M": ["T", "M2", "F", "T", None, None, None, None, None],
                 "V": [1.0 for _ in range(339)],
-                "id": [None for _ in range(27)]
-            }],
+                "id": [None for _ in range(27)],
+            }
+        ],
     ),
     session: Session = Depends(get_session),
 ) -> Dict[str, str]:
     logger.info(f"Начата отправка результата задачи task_id={task_id}")
     try:
-        task = session.query(Task).filter(Task.task_id == task_id).first()
+        task = session.query(Task).filter(Task.task_id == task_id).first()  # type: ignore[arg-type]
         if not task:
             logger.error(f"Задача с task_id={task_id} не найдена")
             raise HTTPException(status_code=400, detail="Task not found")
-        
+
         for pred in data:
             pred_data = pred.dict()
             if "id" in pred_data:
@@ -261,5 +321,8 @@ async def send_task_result(
         return {"message": "Task result sent successfully!"}
     except Exception as e:
         session.rollback()
-        logger.error(f"Неожиданная ошибка при отправке результата задачи {task_id}: {str(e)}", exc_info=True)
+        logger.error(
+            f"Неожиданная ошибка при отправке результата задачи {task_id}: {str(e)}",
+            exc_info=True,
+        )
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

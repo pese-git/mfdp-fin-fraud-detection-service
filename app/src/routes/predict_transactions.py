@@ -1,22 +1,18 @@
-import json
 from pathlib import Path
-from typing import Any
-from fastapi import APIRouter, HTTPException, Request, Form, Depends, status
+from typing import Any, Optional
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, Form, Request, Response
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from src.auth.authenticate import get_current_user_via_cookies
+from src.database.database import get_session
 from src.models.model import Model
 from src.models.task import Task
-from src.database.database import get_session
-from src.auth.authenticate import get_current_user_via_cookies
 from src.schemas import UserRead
-
-from src.routes.api.predict import PredictionCreate
-
-from uuid import uuid4
-from src.services.rm.rm import RabbitMQClient, RabbitMQConfig
 from src.services.logging.logging import get_logger
-
+from src.services.rm.rm import RabbitMQClient, RabbitMQConfig
 
 rabbitmq_config = RabbitMQConfig()  # или из env/настроек
 rabbitmq_client = RabbitMQClient(rabbitmq_config)
@@ -32,6 +28,7 @@ logger = get_logger(logger_name="routes.predict_transactions")
 
 def nan_to_none(x) -> Any | None:
     import pandas as pd
+
     if pd.isna(x):
         return None
     return x
@@ -63,11 +60,10 @@ def row_to_prediction_dict(row):
     }
 
 
-
 @predict_transactions_route.get("/predict_fin_transaction", response_class=HTMLResponse)
 async def read_predict_fin_transaction(
     request: Request,
-    task_id: str = None,
+    task_id: Optional[str] = None,
     db: Session = Depends(get_session),
     user: UserRead = Depends(get_current_user_via_cookies),
 ) -> HTMLResponse:
@@ -80,9 +76,9 @@ async def read_predict_fin_transaction(
             "Пользователь '%s' (id=%s) запрашивает статус задачи '%s'",
             getattr(user, "name", "anonymous"),
             getattr(user, "id", "unknown"),
-            task_id
+            task_id,
         )
-        task = db.query(Task).filter(Task.task_id == task_id).first()
+        task = db.query(Task).filter(Task.task_id == task_id).first()  # type: ignore[arg-type]
         if task is None:
             errors.append(f"Task with ID '{task_id}' not found.")
             status = "not_found"
@@ -93,8 +89,8 @@ async def read_predict_fin_transaction(
                 predictions = task.fintransaction
                 logger.info("Task '%s' завершена успешно.", task_id)
             elif task.status == "error":
-                errors.append(f"Task завершилась с ошибкой: {task.error or task}")
-                logger.error("Task '%s' завершилась с ошибкой: %s", task_id, task.error)
+                errors.append(f"Task завершилась с ошибкой: {task_id}")
+                logger.error("Task '%s' завершилась с ошибкой", task_id)
             else:
                 errors.append(f"Task в статусе: {task.status}")
                 logger.info("Task '%s' в статусе: %s", task_id, task.status)
@@ -116,7 +112,7 @@ async def predict_fin_transaction(
     transaction_csv: str = Form(...),
     db: Session = Depends(get_session),
     user: UserRead = Depends(get_current_user_via_cookies),
-) -> HTMLResponse:
+) -> Response:
     errors = []
     task_id = str(uuid4())
 
@@ -124,12 +120,13 @@ async def predict_fin_transaction(
         "Поступил запрос на предсказание финансовой транзакции от пользователя '%s' (id=%s). Task ID: %s",
         getattr(user, "name", "anonymous"),
         getattr(user, "id", "unknown"),
-        task_id
+        task_id,
     )
 
     try:
-        import pandas as pd
         from io import StringIO
+
+        import pandas as pd
 
         df = pd.read_csv(StringIO(transaction_csv.strip()))
         prediction_inputs = []
@@ -142,11 +139,7 @@ async def predict_fin_transaction(
         if not model:
             logger.error("Model not found при создании задачи task_id=%s", task_id)
             raise Exception("Model not found")
-        task = Task(
-            task_id=task_id, 
-            status="init",
-            model=model
-        )
+        task = Task(task_id=task_id, status="init", model=model)
 
         # Отправляем задачу через RabbitMQ
         queue_task = {
@@ -168,10 +161,11 @@ async def predict_fin_transaction(
             "Ошибка при обработке запроса предсказания для пользователя '%s' (task_id=%s): %s",
             getattr(user, "name", "anonymous"),
             task_id,
-            e
+            e,
         )
 
     # После постановки задачи редиректим на страницу результатов с task_id
     url = request.url_for("read_predict_fin_transaction").include_query_params(task_id=task_id)
     from starlette.responses import RedirectResponse
+
     return RedirectResponse(url, status_code=303)

@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
+
 from sqlmodel import Field, Relationship, SQLModel, text
 
 # Условный импорт для избежания циклических зависимостей
@@ -29,13 +30,11 @@ class Model(SQLModel, table=True):
     path: Optional[str]
     is_active: Optional[bool] = Field(default=False, nullable=False)
 
-    tasks: Optional[List["Task"]] = Relationship(back_populates="model")  # type: ignore
+    tasks: Optional[List["Task"]] = Relationship(back_populates="model")
 
     created_at: datetime = Field(
         default=None,
         nullable=False,
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
     )
-    updated_at: datetime = Field(
-        default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow}
-    )
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})

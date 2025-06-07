@@ -1,51 +1,44 @@
-from typing import Any, Optional, cast
+from typing import Optional, cast
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 from sqlmodel import Session
 from src.auth.cookieauth import OAuth2PasswordBearerWithCookie
-from src.database.database import get_session
 from src.auth.jwt_handler import verify_access_token
-from src.services.crud.user import get_user_by_email
-
 from src.database.config import get_settings
-
-from src.services.logging.logging import get_logger
-
+from src.database.database import get_session
 from src.models.user import User
+from src.services.crud.user import get_user_by_email
+from src.services.logging.logging import get_logger
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/oauth/signin")
 
-oauth2_scheme_cookie = OAuth2PasswordBearerWithCookie(
-    tokenUrl="/api/oauth/signin", auto_error=False
-)
+oauth2_scheme_cookie = OAuth2PasswordBearerWithCookie(tokenUrl="/api/oauth/signin", auto_error=False)
 
 
 logger = get_logger(logger_name="auth")
 
+
 def get_secret() -> str:
-    key: str = get_settings().SECRET_KEY
+    key = get_settings().SECRET_KEY
     logger.debug("Получен SECRET_KEY для аутентификации")
+    if key is None:
+        raise RuntimeError("SECRET_KEY is not set in settings!")
     return key
 
 
-def authenticate(
-    token: str = Depends(oauth2_scheme), secret_key: str = Depends(get_secret)
-) -> str:
+def authenticate(token: str = Depends(oauth2_scheme), secret_key: str = Depends(get_secret)) -> str:
     if not token:
         logger.warning("Попытка аутентификации без токена")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Sign in for access"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Sign in for access")
     try:
         decoded_token = verify_access_token(token, secret_key=secret_key)
         logger.info("Пользователь успешно аутентифицирован (user=%s)", decoded_token.get("user"))
         return cast(str, decoded_token["user"])
     except Exception as exc:
         logger.error("Неудачная аутентификация: %s", exc)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
 
 
 def authenticate_via_cookies(
@@ -58,11 +51,14 @@ def authenticate_via_cookies(
         return None
     try:
         payload = verify_access_token(token, secret_key=secret_key)
-        user_data: dict[str, Any] = payload.get("user")
+        user_data = payload.get("user")
         if user_data is None:
             logger.warning("Отсутствуют данные пользователя в токене (cookies)")
             return None
-        logger.info("Пользователь успешно аутентифицирован через куки (email=%s)", user_data.get("email"))
+        logger.info(
+            "Пользователь успешно аутентифицирован через куки (email=%s)",
+            user_data.get("email"),
+        )
         return get_user_by_email(email=user_data.get("email"), session=db)
     except Exception as exc:
         logger.error("Ошибка аутентификации через куки: %s", exc)
@@ -81,7 +77,7 @@ def get_current_user(
     )
     try:
         payload = verify_access_token(token, secret_key=secret_key)
-        user_data: dict[str, Any] = payload.get("user")
+        user_data = payload.get("user")
         if user_data is None:
             logger.warning("Не найдены данные пользователя в токене при получении текущего пользователя")
             raise credentials_exception
@@ -108,7 +104,7 @@ def get_current_user_via_cookies(
     )
     try:
         payload = verify_access_token(token, secret_key=secret_key)
-        user_data: dict[str, Any] = payload.get("user")
+        user_data = payload.get("user")
         if user_data is None:
             logger.warning("Не найдены данные пользователя в токене (via cookies)")
             raise credentials_exception

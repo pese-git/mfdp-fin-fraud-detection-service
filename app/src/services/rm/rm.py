@@ -1,13 +1,15 @@
 import json
-import pika
 import logging
-from typing import Optional
+from typing import Any
 
-from .rmqconf import RabbitMQConfig
+import pika
+from pika.exceptions import AMQPError
 from src.services.logging.logging import get_logger
 
+from .rmqconf import RabbitMQConfig
+
 # Устанавливаем уровень логирования для pika через встроенный логгер
-logging.getLogger('pika').setLevel(logging.INFO)
+logging.getLogger("pika").setLevel(logging.INFO)
 
 logger = get_logger(logger_name="RabbitMQClient")
 
@@ -15,17 +17,17 @@ logger = get_logger(logger_name="RabbitMQClient")
 class RabbitMQClient:
     """
     Клиент для взаимодействия с RabbitMQ.
-    
+
     Attributes:
         connection_params: Параметры подключения к RabbitMQ серверу
         queue_name: Имя очереди для ML задач
     """
-    
+
     def __init__(self, config: RabbitMQConfig):
         self.connection_params = config.get_connection_params()
         self.queue_name = config.queue_name
 
-    def send_task(self, task: dict) -> bool:
+    def send_task(self, task: Any) -> bool:
         """
         Отправляет ML задачу в очередь RabbitMQ.
         """
@@ -44,22 +46,22 @@ class RabbitMQClient:
             logger.debug(f"Сообщение подготовлено для отправки: {message}")
 
             # Отправляем сообщение
-            channel.basic_publish(
-                exchange='',
-                routing_key=self.queue_name,
-                body=message
-            )
+            channel.basic_publish(exchange="", routing_key=self.queue_name, body=message)
             logger.info(f"Сообщение успешно отправлено в очередь '{self.queue_name}'")
             connection.close()
             logger.debug("Соединение с RabbitMQ закрыто")
             return True
 
-        except pika.exceptions.AMQPError as e:
+        except AMQPError as e:
             logger.error(f"Ошибка RabbitMQ: {str(e)}", exc_info=True)
             return False
         except Exception as e:
-            logger.error(f"Неизвестная ошибка при отправке задачи в RabbitMQ: {str(e)}", exc_info=True)
+            logger.error(
+                f"Неизвестная ошибка при отправке задачи в RabbitMQ: {str(e)}",
+                exc_info=True,
+            )
             return False
+
 
 # Создаем глобальный экземпляр клиента
 rabbitmq_config = RabbitMQConfig()

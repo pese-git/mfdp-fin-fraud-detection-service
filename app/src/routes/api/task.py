@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Body, Depends
+from typing import Any, List, cast
+
+import src.services.crud.task as TaskService
+from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlmodel import Session
 from src.auth.authenticate import authenticate
 from src.database.database import get_session
 from src.models.task import Task
-import src.services.crud.task as TaskService
-from typing import Any, List, cast
 from src.services.logging.logging import get_logger
 
 task_router = APIRouter(tags=["Tasks"])
 
 
-logger = get_logger(logger_name='task_router')
+logger = get_logger(logger_name="task_router")
 
 
 @task_router.get("/", response_model=List[Task])
@@ -38,6 +39,7 @@ async def retrieve_task(
     task = TaskService.get_task_by_id(id, session=session)
     if not task:
         logger.warning(f"Задача id={id} не найдена")
+        raise HTTPException(status_code=404, detail="Task not found")
     else:
         logger.debug(f"Задача id={id} получена: {task}")
     return task
@@ -52,6 +54,9 @@ async def create_task(
     logger.info(f"Пользователь {user.get('email', '[Unknown user]')} создает задачу: {body}")
     try:
         new_task = TaskService.create_task(body, session=session)
+        if not new_task:
+            logger.error("Не удалось создать задачу из тела: %s", body)
+            raise HTTPException(status_code=500, detail="Failed to create task")
         logger.info(f"Задача создана с id={new_task.id}")
         return new_task
     except Exception as e:

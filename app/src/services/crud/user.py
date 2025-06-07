@@ -1,6 +1,7 @@
+from typing import List, Optional
+
 from sqlmodel import Session
 from src.models.user import User
-from typing import List, Optional
 from src.services.logging.logging import get_logger
 
 logger = get_logger(logger_name="UserCRUD")
@@ -55,7 +56,7 @@ def get_user_by_email(email: str, session: Session) -> Optional[User]:
         или None, если пользователь не найден.
     """
     logger.info(f"Запрошен пользователь по email={email}")
-    user = session.query(User).filter(User.email == email).first()
+    user = session.query(User).filter(User.email == email).first()  # type: ignore[arg-type]
     if user:
         logger.debug(f"Пользователь с email={email} найден")
         return user
@@ -76,7 +77,7 @@ def get_user_by_name(name: str, session: Session) -> Optional[User]:
         или None, если пользователь не найден.
     """
     logger.info(f"Запрошен пользователь по name={name}")
-    user = session.query(User).filter(User.name == name).first()
+    user = session.query(User).filter(User.name == name).first()  # type: ignore[arg-type]
     if user:
         logger.debug(f"Пользователь с name={name} найден")
         return user

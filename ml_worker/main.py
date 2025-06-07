@@ -1,15 +1,14 @@
+import logging
+import sys
+import time
+
+import pika
+from pika.exceptions import AMQPConnectionError
 from rmq.rmqconf import RabbitMQConfig
 from rmq.rmqworker import RabbitMQLlmWorker
-import sys
-import pika
-import time
-import logging
 
 # Настраиваем базовую конфигурацию логирования
-logging.basicConfig(
-    level=logging.DEBUG,  # Устанавливаем уровень логирования DEBUG
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'  # Задаем формат сообщений лога
-)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")  # Устанавливаем уровень логирования DEBUG  # Задаем формат сообщений лога
 
 logger = logging.getLogger(__name__)
 
@@ -26,25 +25,24 @@ def run_worker(worker: RabbitMQLlmWorker) -> None:
             if not worker.connection or not worker.connection.is_open:
                 logger.info("Connecting to RabbitMQ...")
                 worker.connect()
-            
             logger.info("Starting message consumption...")
             worker.start_worker()
-            
-        except pika.exceptions.AMQPConnectionError as e:
+
+        except AMQPConnectionError as e:
             logger.error(f"Connection error: {e}")
             logger.info("Retrying in 5 seconds...")
             time.sleep(5)
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
             raise
-        
+
         time.sleep(1)
 
 
 def main() -> int:
-    mode = 'ml'
+    mode = "ml"
     logger.info(f"Starting worker in {mode} mode")
-    
+
     worker = None
     try:
         config = RabbitMQConfig()

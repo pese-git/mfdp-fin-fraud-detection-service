@@ -1,27 +1,22 @@
-from datetime import datetime
-from typing import Any, List, Optional
-from fastapi import APIRouter, HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr
-from sqlmodel import Session
-from schemas import Token, UserCreate, UserRead
-from src.auth.jwt_handler import create_access_token
-from src.auth.hash_password import HashPassword
-from src.database.database import get_session
-from src.models.user import User
-from src.models.role import Role
-from src.services.crud import user as UserService
+from typing import Any
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from schemas import Token, UserCreate, UserRead
+from sqlmodel import Session
+from src.auth.hash_password import HashPassword
+from src.auth.jwt_handler import create_access_token
 from src.database.config import get_settings
+from src.database.database import get_session
+from src.models.role import Role
+from src.models.user import User
+from src.services.crud import user as UserService
 from src.services.logging.logging import get_logger
 
 
 def get_secret_key() -> str | None:
-    key: str = get_settings().SECRET_KEY
+    key = get_settings().SECRET_KEY
     return key
-
-
-
 
 
 # Основной маршрут для работы с OAuth
@@ -29,7 +24,7 @@ oauth_route = APIRouter(tags=["OAuth"])
 hash_password = HashPassword()
 
 
-logger = get_logger(logger_name='oauth')
+logger = get_logger(logger_name="oauth")
 
 
 @oauth_route.post(
@@ -38,9 +33,7 @@ logger = get_logger(logger_name='oauth')
     status_code=status.HTTP_201_CREATED,
     response_description="Create a new user",
 )
-async def signup(
-    data: UserCreate, session: Session = Depends(get_session)
-) -> UserRead:
+async def signup(data: UserCreate, session: Session = Depends(get_session)) -> UserRead:
     logger.info(f"Попытка регистрации пользователя: name={data.name}, email={data.email}")
 
     if UserService.get_user_by_email(data.email, session) is not None:
@@ -53,15 +46,15 @@ async def signup(
     user_role = session.query(Role).filter_by(name="user").first()
     if not user_role:
         raise HTTPException(
-            status_code=500, 
-            detail="Role 'user' not found. Please initialize roles in the database."
+            status_code=500,
+            detail="Role 'user' not found. Please initialize roles in the database.",
         )
-    
+
     new_user: User = User(
         name=data.name,
         email=data.email,
         hashed_password=hash_password.create_hash(data.password),
-        role_id=user_role.id
+        role_id=user_role.id,
     )
 
     UserService.create_user(
@@ -70,18 +63,18 @@ async def signup(
     )
     logger.info(f"Успешная регистрация: id={new_user.id}, email={new_user.email}")
 
-
     return UserRead(
         id=new_user.id,
         name=new_user.name,
         email=new_user.email,
         is_active=new_user.is_active,
         # wallet=new_user.wallet,
-        transactions=[],
+        # transactions=[],
         # predictions=[],
         created_at=new_user.created_at,
         updated_at=new_user.updated_at,
     )
+
 
 @oauth_route.post(
     "/signin",
@@ -99,15 +92,11 @@ async def sign_user_in(
 
     if user_exist is None:
         logger.warning(f"Вход отклонён: email={user.username} не найден")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
 
     if user_exist.is_active is False:
         logger.warning(f"Вход отклонён: email={user.username} (id={user_exist.id}) не активен")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="User does not active"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User does not active")
 
     if hash_password.verify_hash(user.password, user_exist.hashed_password):
         access_token = create_access_token(
@@ -122,6 +111,4 @@ async def sign_user_in(
         return {"access_token": access_token, "token_type": "Bearer"}
 
     logger.warning(f"Вход отклонён: неверный пароль для email={user.username}")
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid details passed."
-    )
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid details passed.")

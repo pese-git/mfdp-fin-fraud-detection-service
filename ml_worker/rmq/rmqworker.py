@@ -1,27 +1,28 @@
-from typing import Any
-import pika
-import time
-import requests
-import logging
 import json
+import logging
+import time
+from typing import Any
 
-from rmq.rmqconf import RabbitMQConfig
+import pika
+import requests
 from antifraud_model_handler import run_antifraud_task
+from rmq.rmqconf import RabbitMQConfig
 from rmq.schemas import PredictionCreate
 
 # logging конфиг — универсальный стиль
-logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(name)s | %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger(__name__)
-logging.getLogger('pika').setLevel(logging.WARNING)
+logging.getLogger("pika").setLevel(logging.WARNING)
 
 
 class RabbitMQLlmWorker:
     """
     Рабочий ML-класс для получения задач из RabbitMQ, их обработки и отправки результатов.
     """
+
     MAX_RETRIES = 3
     RETRY_DELAY_SEC = 0.5
-    RESULT_ENDPOINT = 'http://app:8080/api/predict/send_task_result'
+    RESULT_ENDPOINT = "http://app:8080/api/predict/send_task_result"
 
     def __init__(self, config: RabbitMQConfig):
         self.config = config
@@ -33,8 +34,12 @@ class RabbitMQLlmWorker:
         """Установить соединение с RabbitMQ с повторными попытками."""
         while True:
             try:
-                params = self.config.get_connection_params()
+                params: pika.ConnectionParameters = self.config.get_connection_params()
                 self.connection = pika.BlockingConnection(params)
+                if self.connection is None:
+                    logger.error("BlockingConnection returned None! Check connection params.")
+                    time.sleep(self.RETRY_DELAY_SEC)
+                    continue
                 self.channel = self.connection.channel()
                 self.channel.queue_declare(queue=self.config.queue_name)
                 logger.info("Connected to RabbitMQ")
@@ -62,11 +67,7 @@ class RabbitMQLlmWorker:
         """
         try:
             json_payload = [pred.model_dump() for pred in result]
-            response = requests.post(
-                self.RESULT_ENDPOINT,
-                params={'task_id': task_id},
-                json=json_payload
-            )
+            response = requests.post(self.RESULT_ENDPOINT, params={"task_id": task_id}, json=json_payload)
             response.raise_for_status()
             logger.info(f"Result sent for task {task_id}")
             return True
@@ -83,9 +84,9 @@ class RabbitMQLlmWorker:
         while retries < self.MAX_RETRIES:
             try:
                 logger.info(f"Received message: {body!r}")
-                msg = json.loads(body.decode('utf-8'))
+                msg = json.loads(body.decode("utf-8"))
                 result = run_antifraud_task(msg)
-                if self.send_task_result(msg['task_id'], result):
+                if self.send_task_result(msg["task_id"], result):
                     ch.basic_ack(delivery_tag=method.delivery_tag)
                     logger.info("Task acknowledgment sent")
                     return
@@ -103,12 +104,11 @@ class RabbitMQLlmWorker:
 
     def start_worker(self) -> None:
         """Запуск обработки очереди (блокирующий вызов)."""
+        if self.channel is None:
+            logger.error("RabbitMQ channel is not established. Did you call connect()?")
+            raise RuntimeError("No channel. Call connect() before start_worker().")
         try:
-            self.channel.basic_consume(
-                queue=self.config.queue_name,
-                on_message_callback=self.process_message,
-                auto_ack=False
-            )
+            self.channel.basic_consume(queue=self.config.queue_name, on_message_callback=self.process_message, auto_ack=False)
             logger.info("Worker started. Press Ctrl+C to stop.")
             self.channel.start_consuming()
         except KeyboardInterrupt:

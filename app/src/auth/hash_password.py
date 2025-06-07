@@ -1,5 +1,6 @@
-from passlib.context import CryptContext
 from typing import cast
+
+from passlib.context import CryptContext
 from src.services.logging.logging import get_logger
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

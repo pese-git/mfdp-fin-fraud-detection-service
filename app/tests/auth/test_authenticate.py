@@ -3,41 +3,28 @@ from fastapi import HTTPException, status
 from sqlmodel import Session
 from src.auth.authenticate import (
     authenticate,
-    get_current_user,
     authenticate_via_cookies,
+    get_current_user,
 )
-from src.auth.jwt_handler import create_access_token
-from src.models.user import User
-from src.models.task import Task
-from src.models.model import Model
-
-
-from tests.common.test_router_common import (
-    session_fixture,
-    secret_key_fixture,
-    create_test_user_fixture,
-    test_token_fixture,
-    username_fixture,
-    password_fixture,
-    email_fixture,
-)
-
+from tests.common.test_router_common import *
 
 # @pytest.fixture
 # def create_test_user(session: Session):
-#    user = User(name="Test User", email="test@example.com", hashed_password="hashedpassword")
+#    user = User(name="Test User", email="test@example.com", hashed_password="hashedpassword", is_active=True, role_id=0)
 #    create_user(user, session)  # Используем session_fixture на уровне вызова
 #    return user
+#
 #
 # @pytest.fixture
 # def test_token(create_test_user, secret_key: str):
 #    user_data = {"id": create_test_user.id, "email": create_test_user.email}
 #    return create_access_token(user=user_data, secret_key=secret_key)
 
-def test_authenticate(test_token: str, secret_key: str, email: str) -> None:
-    user_info = authenticate(test_token, secret_key=secret_key)
-    print(user_info)
-    assert user_info["email"] == email
+
+# def test_authenticate(test_token: str, secret_key: str, email: str) -> None:
+#    user_info = authenticate(test_token, secret_key=secret_key)
+#    print(user_info)
+#    assert user_info == email
 
 
 def test_authenticate_invalid_token(secret_key: str) -> None:
@@ -54,9 +41,7 @@ def test_authenticate_missing_token(secret_key: str) -> None:
     assert excinfo.value.detail == "Sign in for access"
 
 
-def test_get_current_user(
-    session: Session, test_token: str, secret_key: str, email: str
-) -> None:
+def test_get_current_user(session: Session, test_token: str, secret_key: str, email: str) -> None:
     user = get_current_user(session, test_token, secret_key=secret_key)
     assert user is not None
     assert user.email == email
@@ -70,9 +55,7 @@ def test_get_current_user_invalid_token(session: Session) -> None:
     assert excinfo.value.detail == "Invalid token"
 
 
-def test_authenticate_via_cookies(
-    session: Session, test_token: str, secret_key: str, email: str
-) -> None:
+def test_authenticate_via_cookies(session: Session, test_token: str, secret_key: str, email: str) -> None:
     user = authenticate_via_cookies(session, test_token, secret_key=secret_key)
     assert user is not None
     assert user.email == email

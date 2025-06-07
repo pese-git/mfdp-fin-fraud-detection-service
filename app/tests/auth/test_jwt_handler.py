@@ -1,8 +1,10 @@
-import pytest
-from jose import jwt
-from fastapi import HTTPException
 from datetime import datetime, timedelta
+
+import pytest
+from fastapi import HTTPException
+from jose import jwt
 from src.auth.jwt_handler import create_access_token, verify_access_token
+from tests.common.test_router_common import *  # [wildcard-import]
 
 # Сделаем временную SECRET_KEY для теста
 SECRET_KEY = "testsecretkey"

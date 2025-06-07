@@ -1,16 +1,13 @@
-import pytest
-from sqlmodel import SQLModel, Session, create_engine
-from sqlalchemy.pool import StaticPool
+from sqlmodel import Session
 from src.models.model import Model
 from src.services.crud.model import (
+    create_model,
+    delete_all_models,
+    delete_model_by_id,
     get_all_models,
     get_model_by_id,
-    create_model,
-    delete_model_by_id,
-    delete_all_models,
 )
-
-from tests.common.test_router_common import session_fixture
+from tests.common.test_router_common import *  # [wildcard-import]
 
 
 def test_create_model(session: Session) -> None:

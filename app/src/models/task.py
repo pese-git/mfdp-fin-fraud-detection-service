@@ -1,11 +1,12 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, List, Optional
+
 from sqlmodel import Field, Relationship, SQLModel, text
 
 # Условный импорт для избежания циклических зависимостей
 if TYPE_CHECKING:
-    from models.model import Model
     from models.fin_transaction import FinTransaction
+    from models.model import Model
 
 
 class Task(SQLModel, table=True):
@@ -38,14 +39,14 @@ class Task(SQLModel, table=True):
     """
 
     id: int = Field(default=None, primary_key=True)
-    task_id: str
+    task_id: str = Field(default=None, nullable=False)
 
     status: str
 
     model_id: Optional[int] = Field(default=None, foreign_key="model.id")
     model: Optional["Model"] = Relationship(back_populates="tasks")
-    #prediction: Optional["Prediction"] = Relationship(back_populates="task")
-    fintransaction: Optional[List["FinTransaction"]] = Relationship(back_populates="task")  # type: ignore
+    # prediction: Optional["Prediction"] = Relationship(back_populates="task")
+    fintransaction: Optional[List["FinTransaction"]] = Relationship(back_populates="task")
 
     created_at: datetime = Field(
         default=None,

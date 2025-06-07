@@ -1,8 +1,9 @@
 import time
 from datetime import datetime
 from typing import Any
+
 from fastapi import HTTPException, status
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 from src.services.logging.logging import get_logger
 
 logger = get_logger(logger_name="auth.jwt_handler")
@@ -29,13 +30,12 @@ def verify_access_token(token: str, secret_key: str) -> dict[str, Any]:
             )
         if datetime.utcnow() > datetime.utcfromtimestamp(expire):
             logger.warning("Токен истёк")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Token expired!"
-            )
-        logger.info("Access_token успешно верифицирован для пользователя: %s", data["user"].get("email", "unknown") if "user" in data else "unknown")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token expired!")
+        logger.info(
+            "Access_token успешно верифицирован для пользователя: %s",
+            data["user"].get("email", "unknown") if "user" in data else "unknown",
+        )
         return data
     except JWTError as exc:
         logger.error("Неуспешная верификация access_token: %s", exc)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token") from exc

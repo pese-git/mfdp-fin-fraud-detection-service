@@ -1,9 +1,9 @@
-from dotenv import load_dotenv
-from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
-from src.services.logging.logging import get_logger
 
+from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
+from src.services.logging.logging import get_logger
 
 logger = get_logger(logger_name="database.config")
 
@@ -69,6 +69,11 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     logger.info("Загрузка настроек из переменных окружения")
     settings = Settings()
-    logger.info("Настройки успешно загружены: DB_HOST=%s, DB_PORT=%s, DB_USER=%s, DB_NAME=%s", 
-                settings.DB_HOST, settings.DB_PORT, settings.DB_USER, settings.DB_NAME)
+    logger.info(
+        "Настройки успешно загружены: DB_HOST=%s, DB_PORT=%s, DB_USER=%s, DB_NAME=%s",
+        settings.DB_HOST,
+        settings.DB_PORT,
+        settings.DB_USER,
+        settings.DB_NAME,
+    )
     return settings

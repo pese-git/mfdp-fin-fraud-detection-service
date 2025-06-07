@@ -1,18 +1,17 @@
 from typing import Generator
-import uuid
+
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, SQLModel, create_engine
 from sqlalchemy.pool import StaticPool
+from sqlmodel import Session, SQLModel, create_engine
+from src.app import app
 from src.auth.hash_password import HashPassword
 from src.auth.jwt_handler import create_access_token
-from src.database.database import get_session
-from src.app import app
-from src.models.user import User
-from src.models.role import Role
-from src.services.crud.user import create_user
-
 from src.database.config import get_settings
+from src.database.database import get_session
+from src.models.role import Role
+from src.models.user import User
+from src.services.crud.user import create_user
 
 
 @pytest.fixture(name="secret_key")
@@ -52,9 +51,7 @@ def admin_role_fixture(session: Session) -> Role:
 
 @pytest.fixture(name="session")
 def session_fixture() -> Generator[Session, None, None]:
-    engine = create_engine(
-        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
-    )
+    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
         yield session
@@ -72,9 +69,7 @@ def client_fixture(session: Session) -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture(name="test_user")
-def create_test_user_fixture(
-    session: Session, username: str, email: str, password: str
-) -> User:
+def create_test_user_fixture(session: Session, username: str, email: str, password: str) -> User:
     admin_role = Role(name="admin")
     user_role = Role(name="user")
     session.add_all([admin_role, user_role])
@@ -85,7 +80,7 @@ def create_test_user_fixture(
         name=username,
         email=email,
         hashed_password=hashed_password,
-        roles=admin_role,
+        role_id=admin_role.id,
         is_active=True,
     )
     create_user(user, session)

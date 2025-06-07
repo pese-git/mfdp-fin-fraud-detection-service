@@ -1,6 +1,7 @@
+from typing import List, Optional
+
 from sqlmodel import Session
 from src.models.model import Model
-from typing import List, Optional
 from src.services.logging.logging import get_logger
 
 logger = get_logger(logger_name="ModelCRUD")

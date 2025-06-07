@@ -1,21 +1,12 @@
 import uuid
+
+from fastapi import status
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from fastapi import status
-
 from src.auth.hash_password import HashPassword
 from src.models.role import Role
 from src.models.user import User
-from tests.common.test_router_common import (
-    client_fixture,
-    session_fixture,
-    secret_key_fixture,
-    create_test_user_fixture,
-    test_token_fixture,
-    username_fixture,
-    password_fixture,
-    email_fixture,
-)
+from tests.common.test_router_common import *
 
 
 def test_signup(client: TestClient, test_user: User) -> None:
@@ -38,16 +29,19 @@ def test_signup_invalid(client: TestClient) -> None:
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_signup_existing_user(
-    client: TestClient, session: Session, test_user: User
-) -> None:
+def test_signup_existing_user(client: TestClient, session: Session, test_user: User) -> None:
     user_role = session.query(Role).filter_by(name="user").first()
+    if user_role is None:
+        user_role = Role(name="user")
+        session.add(user_role)
+        session.commit()
+        session.refresh(user_role)
     hashed_password = HashPassword().create_hash("testpassword")
     existing_user = User(
         name="Existing User",
         email="existing@example.com",
         hashed_password=hashed_password,
-        roles=user_role,
+        role_id=user_role.id,
     )
     session.add(existing_user)
     session.commit()
@@ -64,12 +58,17 @@ def test_signup_existing_user(
 
 def test_signin(client: TestClient, session: Session, test_user: User) -> None:
     user_role = session.query(Role).filter_by(name="user").first()
+    if user_role is None:
+        user_role = Role(name="user")
+        session.add(user_role)
+        session.commit()
+        session.refresh(user_role)
     hashed_password = HashPassword().create_hash("testpassword")
     user = User(
         name="Test User",
         email="signin@example.com",
         hashed_password=hashed_password,
-        roles=user_role,
+        role_id=user_role.id,
     )
     session.add(user)
     session.commit()
@@ -93,15 +92,18 @@ def test_signin_invalid_user(client: TestClient) -> None:
     assert response.json() == {"detail": "User does not exist"}
 
 
-def test_signin_invalid_password(
-    client: TestClient, session: Session, test_user: User
-) -> None:
+def test_signin_invalid_password(client: TestClient, session: Session, test_user: User) -> None:
     user_role = session.query(Role).filter_by(name="user").first()
+    if user_role is None:
+        user_role = Role(name="user")
+        session.add(user_role)
+        session.commit()
+        session.refresh(user_role)
     user = User(
         name="Another User",
         email="valid@example.com",
         hashed_password=HashPassword().create_hash("rightpassword"),
-        roles=user_role,
+        role_id=user_role.id,
     )
     session.add(user)
     session.commit()

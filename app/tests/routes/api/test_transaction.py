@@ -1,26 +1,12 @@
-import uuid
+from fastapi import status
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from fastapi import status
-
 from src.models.fin_transaction import FinTransaction
-
-from tests.common.test_router_common import (
-    client_fixture,
-    session_fixture,
-    secret_key_fixture,
-    create_test_user_fixture,
-    test_token_fixture,
-    username_fixture,
-    password_fixture,
-    email_fixture,
-)
 from src.models.user import User
+from tests.common.test_router_common import *
 
 
-def test_retrieve_all_transactions(
-    client: TestClient, session: Session, test_token: str
-) -> None:
+def test_retrieve_all_transactions(client: TestClient, session: Session, test_token: str) -> None:
     # user, password = create_test_user(session)
     # access_token = get_access_token(client, user.email, password)
     headers = {"Authorization": f"Bearer {test_token}"}
@@ -29,9 +15,7 @@ def test_retrieve_all_transactions(
     assert isinstance(response.json(), list)
 
 
-def test_retrieve_transaction(
-    client: TestClient, session: Session, test_user: User, test_token: str
-) -> None:
+def test_retrieve_transaction(client: TestClient, session: Session, test_user: User, test_token: str) -> None:
     # user, password = create_test_user(session)
     # access_token = get_access_token(client, user.email, password)
     headers = {"Authorization": f"Bearer {test_token}"}
@@ -39,10 +23,10 @@ def test_retrieve_transaction(
         TransactionID=12345,
         TransactionDT=1710000000,
         TransactionAmt=100.50,
-        ProductCD='W',
+        ProductCD="W",
         card1=1111,
         card2=2222,
-        card4='visa',
+        card4="visa",
         isFraud=1,
         task_id=5,
     )
@@ -55,9 +39,7 @@ def test_retrieve_transaction(
     assert transaction_data["TransactionDT"] == new_transaction.TransactionDT
 
 
-def test_delete_transaction(
-    client: TestClient, session: Session, test_user: User, test_token: str
-) -> None:
+def test_delete_transaction(client: TestClient, session: Session, test_user: User, test_token: str) -> None:
     # user, password = create_test_user(session)
     # access_token = get_access_token(client, user.email, password)
     headers = {"Authorization": f"Bearer {test_token}"}
@@ -65,10 +47,10 @@ def test_delete_transaction(
         TransactionID=12345,
         TransactionDT=1710000000,
         TransactionAmt=100.50,
-        ProductCD='W',
+        ProductCD="W",
         card1=1111,
         card2=2222,
-        card4='visa',
+        card4="visa",
         isFraud=1,
         task_id=5,
     )
@@ -81,9 +63,7 @@ def test_delete_transaction(
     assert session.get(FinTransaction, new_transaction.id) is None
 
 
-def test_delete_all_transactions(
-    client: TestClient, session: Session, test_user: User, test_token: str
-) -> None:
+def test_delete_all_transactions(client: TestClient, session: Session, test_user: User, test_token: str) -> None:
     # user, password = create_test_user(session)
     # access_token = get_access_token(client, user.email, password)
     headers = {"Authorization": f"Bearer {test_token}"}
@@ -92,10 +72,10 @@ def test_delete_all_transactions(
             TransactionID=12345,
             TransactionDT=1710000000,
             TransactionAmt=100.50,
-            ProductCD='W',
+            ProductCD="W",
             card1=1111,
             card2=2222,
-            card4='visa',
+            card4="visa",
             isFraud=1,
             task_id=5,
         )
@@ -105,10 +85,10 @@ def test_delete_all_transactions(
             TransactionID=5431,
             TransactionDT=1710000000,
             TransactionAmt=200.50,
-            ProductCD='W',
+            ProductCD="W",
             card1=1111,
             card2=2222,
-            card4='visa',
+            card4="visa",
             isFraud=1,
             task_id=5,
         )
