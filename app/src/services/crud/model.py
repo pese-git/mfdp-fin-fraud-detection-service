@@ -1,6 +1,9 @@
 from sqlmodel import Session
 from src.models.model import Model
 from typing import List, Optional
+from src.services.logging.logging import get_logger
+
+logger = get_logger(logger_name="ModelCRUD")
 
 
 def get_all_models(session: Session) -> List[Model]:
@@ -10,7 +13,10 @@ def get_all_models(session: Session) -> List[Model]:
     :param session: Сессия базы данных, используемая для выполнения запроса.
     :return: Список, содержащий все экземпляры Model, найденные в базе данных.
     """
-    return session.query(Model).all()
+    logger.info("Запрошен список всех моделей")
+    models = session.query(Model).all()
+    logger.debug(f"Найдено {len(models)} моделей")
+    return models
 
 
 def get_model_by_id(id: int, session: Session) -> Optional[Model]:
@@ -21,7 +27,12 @@ def get_model_by_id(id: int, session: Session) -> Optional[Model]:
     :param session: Сессия базы данных, используемая для выполнения запроса.
     :return: Экземпляр Model с указанным ID, или None, если не найден.
     """
-    return session.get(Model, id)
+    model = session.get(Model, id)
+    if model:
+        logger.debug(f"Модель с id={id} найдена")
+        return model
+    logger.warning(f"Модель с id={id} не найдена")
+    return None
 
 
 def create_model(new_model: Model, session: Session) -> Model:
@@ -32,9 +43,11 @@ def create_model(new_model: Model, session: Session) -> Model:
     :param session: Сессия базы данных, используемая для выполнения операции.
     :return: Экземпляр Model, который был добавлен в базу данных, с обновленным состоянием.
     """
+    logger.info("Создается новая модель")
     session.add(new_model)
     session.commit()
     session.refresh(new_model)
+    logger.info(f"Модель успешно создана (id={new_model.id})")
     return new_model
 
 
@@ -47,12 +60,14 @@ def delete_model_by_id(id: int, session: Session) -> Model:
     :return: Экземпляр Model, который был удален.
     :raises Exception: Если Model с указанным ID не найдена.
     """
+    logger.info(f"Попытка удалить модель с id={id}")
     model = session.get(Model, id)
     if not model:
+        logger.error(f"Модель с id={id} не найдена для удаления")
         raise Exception("User not found")
-    # Удаляем модель
     session.delete(model)
     session.commit()
+    logger.info(f"Модель с id={id} успешно удалена")
     return model
 
 
@@ -63,5 +78,7 @@ def delete_all_models(session: Session) -> None:
     :param session: Сессия базы данных, используемая для выполнения операции.
     :return: None
     """
-    session.query(Model).delete()
+    logger.warning("Инициировано удаление всех моделей")
+    count = session.query(Model).delete()
     session.commit()
+    logger.info(f"Удалено {count} моделей")
