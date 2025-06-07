@@ -82,6 +82,7 @@
 Для запуска тестов выполните:
 
 ```sh
+cd app
 export PYTHONPATH="${PYTHONPATH}:./src"
 pytest tests
 ```
