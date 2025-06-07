@@ -4,4 +4,13 @@
 {% block header %}User Dashboard{% endblock %}
 {% block content %}
 <p>Welcome, {{ user.name }}</p>
+
+<div>
+    <h3>Статистика транзакций:</h3>
+    <ul>
+        <li>Всего обработано транзакций: <strong>{{ total_count }}</strong></li>
+        <li>Мошеннических операций: <strong>{{ fraud_count }}</strong></li>
+        <li>Положительных операций: <strong>{{ good_count }}</strong></li>
+    </ul>
+</div>
 {% endblock %}
