@@ -21,6 +21,6 @@ RUN pip install torch-cluster==1.6.3 -f https://data.pyg.org/whl/torch-2.7.0+cpu
 # Проверка
 RUN python -c "import torch; print(torch.__version__)"
 
-COPY . /app/
+COPY . .
 
 CMD ["python", "main.py"]

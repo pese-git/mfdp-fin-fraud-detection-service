@@ -1,8 +1,14 @@
+import logging
 import os
 from dataclasses import dataclass
 
 import pika
 from dotenv import load_dotenv
+
+# Настройка логгера
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
 
 # Загрузить .env при первом импорте этого модуля
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
@@ -26,8 +32,8 @@ class RabbitMQConfig:
     """
 
     # Параметры подключения
-    host: str = os.getenv("RABBITMQ_HOST", "rabbitmq")
-    port: int = int(os.getenv("RABBITMQ_PORT", 5672))
+    host: str = os.getenv("RABBITMQ_SERVICE_HOST", "rabbitmq")
+    port: int = int(os.getenv("RABBITMQ_SERVICE_PORT", "5672"))
     virtual_host: str = os.getenv("RABBITMQ_VHOST", "/")
 
     # Параметры аутентификации
@@ -41,6 +47,17 @@ class RabbitMQConfig:
     # Параметры соединения
     heartbeat: int = int(os.getenv("RABBITMQ_HEARTBEAT", 30))
     connection_timeout: int = int(os.getenv("RABBITMQ_CONNECTION_TIMEOUT", 2))
+
+    def __post_init__(self) -> None:
+        logger.info("RabbitMQConfig initialized with:")
+        logger.info(f"  host = {self.host}")
+        logger.info(f"  port = {self.port}")
+        logger.info(f"  virtual_host = {self.virtual_host}")
+        logger.info(f"  username = {self.username}")
+        logger.info(f"  queue_name = {self.queue_name}")
+        logger.info(f"  rpc_queue_name = {self.rpc_queue_name}")
+        logger.info(f"  heartbeat = {self.heartbeat}")
+        logger.info(f"  connection_timeout = {self.connection_timeout}")
 
     def get_connection_params(self) -> pika.ConnectionParameters:
         """Создает параметры подключения к RabbitMQ."""
@@ -77,6 +94,15 @@ class MLConfig:
     # Пути и имена моделей
     fraud_pipeline_path: str = os.getenv("PIPELINE_PATH", "preprocessor/fraud_pipeline.joblib")
     logged_model_uri: str = os.getenv("LOGGED_MODEL_URI", "runs:/615587bb4786452e8fc4b9b8cdb69adf/model")
+
+    def __post_init__(self) -> None:
+        logger.info("MLConfig initialized with:")
+        logger.info(f"  mlflow_url = {self.mlflow_url}")
+        logger.info(f"  mlflow_experiment = {self.mlflow_experiment}")
+        logger.info(f"  oauth_url = {self.oauth_url}")
+        logger.info(f"  mlflow_s3_endpoint_url = {self.mlflow_s3_endpoint_url}")
+        logger.info(f"  fraud_pipeline_path = {self.fraud_pipeline_path}")
+        logger.info(f"  logged_model_uri = {self.logged_model_uri}")
 
 
 RABBITMQ_CONFIG = RabbitMQConfig()
