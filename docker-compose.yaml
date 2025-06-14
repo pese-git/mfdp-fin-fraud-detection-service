@@ -33,7 +33,7 @@ services:
     env_file:
       - ./ml_worker/.env
     #container_name: antifraud-worker
-    scale: 3
+    scale: 1
     restart: unless-stopped
 
     volumes:
