@@ -6,7 +6,7 @@ from typing import Any
 import pika
 import requests
 from antifraud_model_handler import run_antifraud_task
-from rmq.rmqconf import RabbitMQConfig
+from rmq.rmqconf import APP_SERVICE_CONFIG, RabbitMQConfig
 from rmq.schemas import PredictionCreate
 
 # logging конфиг — универсальный стиль
@@ -22,7 +22,7 @@ class RabbitMQLlmWorker:
 
     MAX_RETRIES = 3
     RETRY_DELAY_SEC = 0.5
-    RESULT_ENDPOINT = "http://app:8080/api/predict/send_task_result"
+    RESULT_ENDPOINT = APP_SERVICE_CONFIG.get_request_url()
 
     def __init__(self, config: RabbitMQConfig):
         self.config = config

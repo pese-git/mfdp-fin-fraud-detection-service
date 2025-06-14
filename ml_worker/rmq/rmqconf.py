@@ -105,5 +105,23 @@ class MLConfig:
         logger.info(f"  logged_model_uri = {self.logged_model_uri}")
 
 
+@dataclass
+class AppServiceConfig:
+    """Параметры AppService, авторизации и путей к моделям."""
+
+    app_service_host: str = os.getenv("APP_SERVICE_HOST", "")
+    app_service_port: int = int(os.getenv("APP_SERVICE_PORT", "0"))
+
+    def __post_init__(self) -> None:
+        logger.info("MLConfig initialized with:")
+        logger.info(f"  app_service_host = {self.app_service_host}")
+        logger.info(f"  app_service_port = {self.app_service_port}")
+
+    def get_request_url(self) -> str:
+        """Создает параметры подключения к RabbitMQ."""
+        return f"http://{self.app_service_host}:{self.app_service_port}/api/predict/send_task_result"
+
+
 RABBITMQ_CONFIG = RabbitMQConfig()
 ML_CONFIG = MLConfig()
+APP_SERVICE_CONFIG = AppServiceConfig()
